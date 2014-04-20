@@ -1,0 +1,25 @@
+Yanapack: Yet Another Nodal Analyser PACKage
+
+This nodal analyser is dedicated to electro-mechanico-acoustical équivalent circuit simulation.
+
+At this time, new netlist is provided to simulation core using your {vim,emacs} and gcc.
+
+Heavy work in progress.
+
+Elements simulated
+
+Resistors
+Capacitors
+Indoctors
+Transformer
+Gyrator
+current sources
+tension sources
+pistonic radiator   (complex impedance built with Bessel functions)
+port impedance      (port found in vented enclosures)
+box impedance 
+free air impedance  (from the source to the listener)
+
+It is work in progress.
+
+This library will be used in a improved version of the loudspeaker graphing calculator ( https://github.com/ploki/Loudspeaker/ )

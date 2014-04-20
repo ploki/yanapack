@@ -1,6 +1,6 @@
 Yanapack: Yet Another Nodal Analyser PACKage
 
-This nodal analyser is dedicated to electro-mechanico-acoustical équivalent circuit simulation.
+This nodal analyser is dedicated to electro-mechanico-acoustical equivalent circuit simulation.
 
 At this time, new netlist is provided to simulation core using your {vim,emacs} and gcc.
 

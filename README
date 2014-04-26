@@ -1,6 +1,6 @@
-Yanapack: Yet Another Nodal Analyser PACKage
+Yanapack: Yet Another Nodal Analysis PACKage
 
-This nodal analyser is dedicated to electro-mechanico-acoustical equivalent circuit simulation.
+This nodal analysis software is dedicated to electro-mechanico-acoustical equivalent circuit simulation.
 
 At this time, new netlist is provided to simulation core using your {vim,emacs} and gcc.
 
@@ -19,6 +19,8 @@ pistonic radiator   (complex impedance built with Bessel functions)
 port impedance      (port found in vented enclosures)
 box impedance 
 free air impedance  (from the source to the listener)
+
+At this time, only linear analysis in the frequency domain is supported. A simple Gauss-Jordan algorithm is used and no special attention is taken on conditioning the system of equations.
 
 It is work in progress.
 

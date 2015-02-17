@@ -406,8 +406,122 @@
   "ZrT1  7 0 0.0008 ai\n"			\
   "ZrT1  8 0 0.0008 ai\n"
 
+#if 1
+#define NETLIST_SURROUND			\
+  "Eg 1 0 2.83\n"				\
+  "Lbsc 1 2 0.8e-3 .22\n"			\
+  "Rbsc 1 2 3.3\n"				\
+						\
+  "Llp  2 3 .6e-3 .21\n"			\
+  "Clp  3 0 3.9e-6\n"				\
+  "Cnw  3 4 1.2e-6\n"				\
+  "Rnw  4 0 6.8\n"				\
+  "LeW  3 5 .056e-3 6.5\n"			\
+						\
+  "TlW  5 0 7.227\n"				\
+						\
+  "TrW   6 0 1\n"				\
+  "RrmsW 6 0 .712294\n"				\
+  "CmmsW 6 0 9.5e-3\n"				\
+  "LcmsW 6 0 1.12651e-3\n"			\
+  "GlW   6 0 0.0132\n"				\
+						\
+  "GrW   7 0 0.0132\n"				\
+  "Box   7 8 0.009\n"				\
+  "ZrW1  8 9 0.0132\n"				\
+  "ZrW1  9 0 0.0132\n"				\
+						\
+  "Chp   1 10 3.9e-6\n"				\
+  "Lhp   10 0 .20e-3 .10\n"			\
+  "Chp2  10 11 12e-6\n"				\
+						\
+  /*"Cnt   10 11 1.2e-6\n"*/			\
+  /*"Rnt   11 0 6.8\n"*/			\
+  						\
+  /*"Rnotch 10 16 15\n"*/			\
+  /*"Lnotch 16 17 1.30e-3 0.39\n"*/		\
+  /*"Cnotch 17 0 6.8e-6\n"*/			\
+						\
+  "LeT   11 12 0.05e-3 6.2\n"			\
+  "TlT   12 0 2.6\n"				\
+						\
+  "TrT   13 0 1\n"				\
+  "RrmsT 13 0 1.36485\n"			\
+  "CmmsT 13 0 0.23e-3\n"			\
+  "LcmsT 13 0 38.107e-6\n"			\
+  "GlT   13 0 0.0004\n"				\
+						\
+  "GrT   14 0 0.0004\n"				\
+  "ZrT1  14 15 0.0004\n"			\
+  "ZrT2  15 0 0.0004\n"
+#else
+#define NETLIST_SURROUND			\
+  "Eg 1 0 2.83\n"				\
+  "LeW  1 5 .056e-3 6.5\n"			\
+						\
+  "TlW  5 0 7.227\n"				\
+						\
+  "TrW   6 0 1\n"				\
+  "RrmsW 6 0 .712294\n"				\
+  "CmmsW 6 0 9.5e-3\n"				\
+  "LcmsW 6 0 1.12651e-3\n"			\
+  "GlW   6 0 0.0132\n"				\
+						\
+  "GrW   7 0 0.0132\n"				\
+  "Box   7 8 0.009\n"				\
+  "ZrW1  8 9 0.0132\n"				\
+  "ZrW1  9 0 0.0132\n"				\
+						\
+  "LeT   1 12 0.05e-3 6.2\n"			\
+  "TlT   12 0 2.6\n"				\
+						\
+  "TrT   13 0 1\n"				\
+  "RrmsT 13 0 1.36485\n"			\
+  "CmmsT 13 0 0.23e-3\n"			\
+  "LcmsT 13 0 38.107e-6\n"			\
+  "GlT   13 0 0.0004\n"				\
+						\
+  "GrT   14 0 0.0004\n"				\
+  "ZrT1  14 15 0.0004\n"			\
+  "ZrT2  15 0 0.0004\n"
+#endif
 
+#define FILTRE_PARFAIT				\
+  "Eg  1 0 1\n"				\
+  "Llp 1 2 2.546e-3\n"				\
+  "Clp 2 0 9.95e-6\n"				\
+  "Rw  2 0 8\n"					\
+						\
+  "Chp 1 3 9.95e-6\n"				\
+  "Lhp 3 0 2.546e-3\n"				\
+  "Rt  3 0 8\n"
 
+#define NETLIST_SURROUND_ELEC			\
+  "Eg 1 0 1.4142\n"				\
+  "Lbsc 1 2 0.8e-3 .22\n"			\
+  "Rbsc 1 2 3.3\n"				\
+  "Llp  2 3 .6e-3 .21\n"			\
+  "Clp  3 0 6.5e-6\n"				\
+  "Cnw  3 4 1.2e-6\n"				\
+  "Rnw  4 0 6.8\n"				\
+  "LeW  3 5 .056e-3 6.5\n"			\
+  "CmesW 5 0 181.89e-6\n"			\
+  "LcesW 5 0 58.84e-3\n"			\
+  "ResW 5 0 73.33\n"				\
+						\
+  "Chp   1 6 3.9e-6\n"				\
+  "Lhp   6 0 .2e-3 .21\n"			\
+  "Cnt   6 7 1.2e-6\n"				\
+  "Rnt   7 0 6.8\n"				\
+  						\
+  "Rnotch 6 8 14\n"				\
+  "Lnotch 8 9 1.32e-3 0.2\n"			\
+  "Cnotch 9 0 6.59e-6\n"			\
+						\
+  "LeT   6 10 0.05e-3 6.2\n"			\
+  "CmesT 10 0 34.02e-6\n"			\
+  "LcesT 10 0 0.26e-3\n"			\
+  "ResT 10 0 4.95\n"
 
 
 #define NETLIST_TWIN_GYRATOR			\
@@ -671,7 +785,7 @@ void utest_divisor(void)
 
 int main(int argc, char **argv)
 {
-  simulation_context_t *sc = simulation_context_new(1,5,500);
+  simulation_context_t *sc = simulation_context_new(1,5,50);
   //simulation_context_t *sc = simulation_context_new(-2,2,100);
   netlist_t *netlist;
   nodelist_t *nodelist;
@@ -694,8 +808,11 @@ int main(int argc, char **argv)
 		       //NETLIST_DIVISOR
 		       //NETLIST_LOUDSPEAKER
 		       //NETLIST_SPLIFFTOWN4000XL
-		       NETLIST_SPLIFFTOWN2500XL
+		       //NETLIST_SPLIFFTOWN2500XL
 		       //NETLIST_SPLIFFTOWN2500XL_IDEAL
+		       //NETLIST_SURROUND_ELEC
+		       NETLIST_SURROUND
+		       //FILTRE_PARFAIT
 		       //NETLIST_D2604_8330
 		       //NETLIST_26W8534G00
 		       //NETLIST_TRANSFORMER
@@ -845,7 +962,7 @@ int main(int argc, char **argv)
 #endif
 
 
-#if 1
+#if 0
 	  // SPIFFTOWN2500XL
 	  yana_complex_t imp = free_air_impedance(simulation_context_get_f(sc,i), 1, 2);
 	  //radiation
@@ -877,7 +994,83 @@ int main(int argc, char **argv)
 # endif
 #endif
 
+#if 1
+	  // SURROUND
+	  // set logscale x
+	  // set mxtics
+	  // set mytics
+	  // set style line 12 lc rgb '#ddccdd' lt 1 lw 1.5
+	  // set style line 13 lc rgb '#ddccdd' lt 1 lw 0.5
+	  // set grid xtics mxtics ytics mytics back ls 12, ls 13
+	  // plot [16:40000] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
+	  yana_complex_t imp = free_air_impedance(simulation_context_get_f(sc,i), 1, 2);
+	  //radiation
+	  yana_complex_t i1 = simulation_result(simulation,"ZrW1")[i];
+	  yana_complex_t i2 = simulation_result(simulation,"ZrT1")[i];
+	  yana_complex_t v1 = imp * i1;
+	  yana_complex_t v2 = imp * i2;
 
+	  yana_complex_t sum = v1 - v2;
+	  yana_real_t mod1 = cabs(v1);
+	  yana_real_t mod2 = cabs(v2);
+	  yana_real_t mods = cabs(sum);
+
+	  printf("%f\t%.18f\t%.18f\t%.18f\n",
+		 (double)simulation_context_get_f(sc,i),
+		 (double)20. * log10( mods  / (  20e-6)   ),
+		 (double)20. * log10( mod1  / (  20e-6)  ),
+		 (double)20. * log10( mod2 / (  20e-6)  )
+		 );
+#endif
+
+
+#if 0
+	  // SURROUND_ELEC
+	  // set logscale x
+	  // set mxtics
+	  // set mytics
+	  // set style line 12 lc rgb '#ddccdd' lt 1 lw 1.5
+	  // set style line 13 lc rgb '#ddccdd' lt 1 lw 0.5
+	  // set grid xtics mxtics ytics mytics back ls 12, ls 13
+	  // plot [16:40000] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
+
+	  yana_complex_t gnd = simulation_result(simulation,"0")[i];
+	  yana_complex_t v1 = simulation_result(simulation,"3")[i] - gnd;
+	  yana_complex_t v2 = (simulation_result(simulation,"6")[i] - gnd)/1.4142;
+
+	  yana_complex_t sum = v1 - v2;
+	  yana_real_t mod1 = cabs(v1);
+	  yana_real_t mod2 = cabs(v2);
+	  yana_real_t mods = cabs(sum);
+
+	  printf("%f\t%.18f\t%.18f\t%.18f\n",
+		 (double)simulation_context_get_f(sc,i),
+		 (double)20. * log10( mods ),
+		 (double)20. * log10( mod1 ),
+		 (double)20. * log10( mod2 )
+		 );
+#endif
+
+#if 0
+	  //FILTRE PARFAIT
+	  yana_complex_t gnd = simulation_result(simulation,"0")[i];
+	  yana_complex_t v1 = simulation_result(simulation,"2")[i] - gnd;
+	  yana_complex_t v2 = simulation_result(simulation,"3")[i] - gnd;
+
+	  yana_complex_t sum = v1 - v2;
+	  yana_real_t mod1 = cabs(v1);
+	  yana_real_t mod2 = cabs(v2);
+	  yana_real_t mods = cabs(sum);
+
+	  printf("%f\t%.18f\t%.18f\t%.18f\n",
+		 (double)simulation_context_get_f(sc,i),
+		 (double)20. * log10( mods ),
+		 (double)20. * log10( mod1 ),
+		 (double)20. * log10( mod2 )
+		 );
+#endif
+
+	  
 #if 0
 	  //D2604
 	  yana_complex_t imp = free_air_impedance(simulation_context_get_f(sc,i),

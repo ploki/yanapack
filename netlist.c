@@ -60,6 +60,11 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
         line != NULL ;
 	line = strtok_r(NULL, "\n", &tmp1) )
     {
+      if ( '.' == line[0] ||
+	   '*' == line[0] ||
+	   '$' == line[0] ||
+	   '!' == line[0] )
+	continue;
       char *name, *node1 = NULL, *node2 = NULL, *magnitude = NULL, *param1 = NULL, *param2 = NULL;
       name = strtok_r(line, " ", &tmp2);
       if ( NULL != name )

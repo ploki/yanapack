@@ -1,0 +1,72 @@
+* SURROUND based on Fostex FF165WK and SEAS 19TTF1
+
+Eg 1 0 2.83
+Lbsc 1 2 0.8e-3 .22
+Rbsc 1 2 3.3
+
+Llp  2 3 .6e-3 .21
+Clp  3 0 3.9e-6
+Cnw  3 4 1.2e-6
+Rnw  4 0 6.8
+LeW  3 5 .056e-3 6.5
+
+TlW  5 0 7.227
+
+TrW   6 0 1
+RrmsW 6 0 .712294
+CmmsW 6 0 9.5e-3
+LcmsW 6 0 1.12651e-3
+GlW   6 0 0.0132
+
+GrW   7 0 0.0132
+Box   7 8 0.009
+ZrW1  8 9 0.0132 ai
+ZrW1  9 0 0.0132 ai
+
+Chp   1 10 3.9e-6
+Lhp   10 0 .20e-3 .10
+Chp2  10 11 12e-6
+
+* Cnt   10 11 1.2e-6
+* Rnt   11 0 6.8
+
+* Rnotch 10 16 15
+* Lnotch 16 17 1.30e-3 0.39
+* Cnotch 17 0 6.8e-6
+
+LeT   11 12 0.05e-3 6.2
+TlT   12 0 2.6
+
+TrT   13 0 1
+RrmsT 13 0 1.36485
+CmmsT 13 0 0.23e-3
+LcmsT 13 0 38.107e-6
+GlT   13 0 0.0004
+
+GrT   14 0 0.0004
+ZrT1  14 15 0.0004 ai
+ZrT2  15 0 0.0004 ai
+
+
+! frequency response /1m
+*. F .
+*. 1 2 FREEAIR
+*. DUP IZrW1 IZrT1 - * DBSPL .
+*. DUP IZrW1        * DBSPL .
+*.     IZrT1        * DBSPL .
+
+! power dissipation in resistors
+*. F .
+*. IRbsc v1 v2 - * REAL ABS .
+*. IRnw v4 v0 - *  REAL ABS .
+
+! total impedance
+*. F .
+*. v1 v0 - IEg / DUP ABS . ARG DEG .
+
+! group delay
+. F .
+. 1 2 FREEAIR
+. DUP IZrW1 IZrT1 - * ARG 2 PI F * * / 1000 * NEG .
+. DUP IZrW1         * ARG 2 PI F * * / 1000 * NEG .
+.     IZrT1         * ARG 2 PI F * * / 1000 * NEG .

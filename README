@@ -1,10 +1,6 @@
 Yanapack: Yet Another Nodal Analysis PACKage
 
-This nodal analysis software is dedicated to electro-mechanico-acoustical equivalent circuit simulation.
-
-At this time, new netlist is provided to simulation core using your {vim,emacs} and gcc.
-
-Heavy work in progress.
+This nodal analysis software is dedicated to electro-mechanical-acoustical equivalent circuit simulation (from a lumped element model).
 
 Elements simulated
 

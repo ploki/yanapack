@@ -78,9 +78,16 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
       if ( NULL != param1 )
 	param2 = strtok_r(NULL, " ", &tmp2);
       
-      if ( NULL == name || NULL == node1 || NULL == node2 || NULL == magnitude )
+      if ( NULL == name )
 	{
-	  fprintf(stderr, "Missing parameter in netlist\n");
+	  fprintf(stderr, "Malformed line in netlist\n");
+	  status = FAILURE;
+	  goto end;
+
+	}
+      if ( NULL == node1 || NULL == node2 || NULL == magnitude )
+	{
+	  fprintf(stderr, "Missing parameter in netlist for %s\n", name);
 	  status = FAILURE;
 	  goto end;
 	}
@@ -118,8 +125,8 @@ void netlist_dump(netlist_t *netlist)
 	     vec_dipole(netlist->dipoles)[i].node1,
 	     vec_dipole(netlist->dipoles)[i].node2,
 	     (double)vec_dipole(netlist->dipoles)[i].magnitude,
-	     vec_dipole(netlist->dipoles)[i].param1,
-	     vec_dipole(netlist->dipoles)[i].param2);
+	     vec_dipole(netlist->dipoles)[i].param1?vec_dipole(netlist->dipoles)[i].param1:"",
+	     vec_dipole(netlist->dipoles)[i].param2?vec_dipole(netlist->dipoles)[i].param2:"");
       
     }
 }

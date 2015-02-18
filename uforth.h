@@ -38,6 +38,10 @@ typedef struct uforth_context uforth_context_t;
 
 status_t uforth_compile(const char *buf, int stack_size,
 			uforth_context_t **uf_ctxp);
+status_t
+uforth_compile_command(const char *buf, int stack_size,
+		       uforth_context_t **uf_ctxp);
+
 void uforth_free(uforth_context_t *uf_ctx);
 
 status_t

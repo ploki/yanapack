@@ -38,7 +38,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
-
+#include <editline/readline.h>
+#include <stdbool.h>
 
 struct option options[] =
   {
@@ -101,6 +102,7 @@ make_short_options(char *buf)
 	    buf[j++] = ':';
 	}
     }
+  buf[j]='\0';
 }
 
 int main(int argc, char **argv)
@@ -108,7 +110,7 @@ int main(int argc, char **argv)
   int c;
   char short_options[1024];
   int from = 1;
-  int to = 6;
+  int to = 5;
   int interactive = 0;
   int steps_per_decade = 50;
   char *netlist_file=NULL;
@@ -180,7 +182,7 @@ int main(int argc, char **argv)
       perror(netlist_file);
       exit(EXIT_FAILURE);
     }
-  char *netlist_buf = malloc(st.st_size);
+  char *netlist_buf = malloc(st.st_size+1);
   if ( NULL == netlist_buf )
     {
       fprintf(stderr, "ENOMEM\n");
@@ -194,6 +196,7 @@ int main(int argc, char **argv)
     }
   size_t bytes = fread(netlist_buf, 1, st.st_size, f);
   assert( bytes == st.st_size );
+  netlist_buf[st.st_size]='\0';
   fclose(f);
 
   netlist_t *netlist;
@@ -223,15 +226,80 @@ int main(int argc, char **argv)
   simulation_set_values(simulation);
   simulation_solve(simulation);
 
-  if ( interactive )
-    printf("plop\n");
-  
-  if ( command )
-    printf("gr8k\n");
+  uforth_context_t *uf_ctx = NULL;
 
-  uforth_context_t *uf_ctx;
-  status = uforth_compile(netlist_buf, 1000, &uf_ctx);
+  if ( command )
+    status = uforth_compile_command(command, 1000, &uf_ctx);
+  else if ( !interactive )
+    status = uforth_compile(netlist_buf, 1000, &uf_ctx);
+
   assert( SUCCESS == status );
-  uforth_execute(uf_ctx, sc, simulation);
-  return 0;
+
+  if ( uf_ctx )
+    {
+      status = uforth_execute(uf_ctx, sc, simulation);
+      uforth_free(uf_ctx);
+    }
+
+  if ( interactive )
+    {
+      fputs("YANAPACK: Yet Another Nodal Analysis PACKage\n", stderr);
+      char *line;
+      using_history();
+      while ( NULL != (line = readline("yanapack> ")) )
+	{
+	  bool run = false;
+	  bool ok = true;
+	  if ( 0 == strcasecmp(line, "LIST") )
+	    fputs(netlist_buf, stderr);
+	  else if ( 0 == strcasecmp(line, "NETLIST") )
+	    netlist_dump(netlist);
+	  else if ( 0 == strcasecmp(line, "NODELIST") )
+	    nodelist_dump(nodelist);
+	  else if ( 0 == strcasecmp(line, "SIMULATION") )
+	    simulation_dump(simulation);
+	  else if ( 0 == strcasecmp(line, "QUIT") )
+	      break;
+	  else if ( 0 == strcasecmp(line, "RUN") )
+	    {
+	      run = true;
+	      goto run_circuit;
+	    }
+	  else
+	    {
+	    run_circuit:
+	      if ( run )
+		status = uforth_compile(netlist_buf, 1000, &uf_ctx);
+	      else
+		status = uforth_compile_command(line, 1000, &uf_ctx);
+	      if ( SUCCESS != status )
+		{
+		  ok = false;
+		  fputs("ERROR: compilation\n", stderr);
+		}
+	      else
+		{
+		  status = uforth_execute(uf_ctx, sc, simulation);
+		  if ( SUCCESS != status )
+		    {
+		      ok = false;
+		      fputs("ERROR: execution\n", stderr);
+		    }
+		  uforth_free(uf_ctx);
+		}
+	    }
+	  if (ok)
+	    fputs("OK\n", stderr);
+	  if ( line[0] != '\0' )
+	    add_history(line);
+	  free(line);
+	}
+    }
+  
+  free(command);
+  free(netlist_file);
+  free(netlist_buf);
+  simulation_free(simulation);
+  simulation_context_free(sc);
+  return status;
 }

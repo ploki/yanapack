@@ -36,6 +36,7 @@
 #include <complex.h>
 #include <assert.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 typedef enum
   {
@@ -101,8 +102,34 @@ uforth_token_new(uforth_token_type_t type,
   return token;
 }
 
-status_t uforth_compile(const char *buf, int stack_size,
-			uforth_context_t **uf_ctxp)
+void
+uforth_token_free(uforth_token_t *token)
+{
+  if ( token )
+    free( token->symbol );
+  free(token);
+}
+
+void
+uforth_free(uforth_context_t *uf_ctx)
+{
+  uforth_token_t *token, *next;
+  if ( NULL == uf_ctx )
+    return;
+  for ( token = uf_ctx->first ;
+	token ;
+	token = next )
+    {
+      next = token->next;
+      uforth_token_free(token);
+    }
+  free(uf_ctx);
+}
+
+static status_t
+compile(const char *buf, int stack_size,
+	bool search_dot,
+	uforth_context_t **uf_ctxp)
 {
   uforth_context_t *uf_ctx;
   uf_ctx = malloc(sizeof(uforth_context_t) +
@@ -118,9 +145,12 @@ status_t uforth_compile(const char *buf, int stack_size,
 	line != NULL ;
 	line = strtok_r(NULL, "\n", &tmp_l ))
     {
-      if ( '.' != line[0] )
-	continue;
-      ++line;
+      if ( search_dot )
+	{
+	  if ( '.' != line[0] )
+	    continue;
+	  ++line;
+	}
       for ( token = strtok_r(line, " ", &tmp_k) ;
 	    token != NULL ;
 	    token = strtok_r(NULL, " ", &tmp_k))
@@ -200,8 +230,23 @@ status_t uforth_compile(const char *buf, int stack_size,
 	  uf_ctx->last = &new_token->next;
 	}
     }
+  free(code_str);
   *uf_ctxp = uf_ctx;
   return SUCCESS;
+}
+
+status_t
+uforth_compile(const char *buf, int stack_size,
+	       uforth_context_t **uf_ctxp)
+{
+  return compile(buf, stack_size, true, uf_ctxp);
+}
+
+status_t
+uforth_compile_command(const char *buf, int stack_size,
+		      uforth_context_t **uf_ctxp)
+{
+  return compile(buf, stack_size, false, uf_ctxp);
 }
 
 static status_t
@@ -354,6 +399,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
   yana_complex_t c1, c2;
   yana_real_t f = simulation_context_get_f(sc, i);
   uforth_token_type_t head_type;
+  bool printed = false;
   for ( token = uf_ctx->first ;
 	token ;
 	token = token->next )
@@ -463,6 +509,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      else
 		fprintf(stdout, "%f%+fi\t", (double)r1, (double)r2);
 	    }
+	  printed=true;
 	  break;
 	case UF_DUP:
 	  POP_COMPLEX("( X -- x x ) DUP", c1);
@@ -497,7 +544,9 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  break;
 	}
     }
-  fprintf(stdout, "\n");
+  if (printed)
+    fprintf(stdout, "\n");
+  printed=false;
   if ( uf_ctx->stack_pos != 0 )
     {
       fprintf(stderr, "WARNING: stack not empty at the end of the processing\n");
@@ -519,7 +568,7 @@ uforth_execute(uforth_context_t *uf_ctx,
       status = uforth_execute_step(uf_ctx, sc, simulation, i);
       if ( SUCCESS != status )
 	{
-	  fprintf(stderr, "Execution failed\n");
+	  fprintf(stderr, "ERROR: Execution failed\n");
 	  return status;
 	}
     }

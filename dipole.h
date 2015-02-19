@@ -75,6 +75,8 @@ status_t dipole_new(simulation_context_t *sc,
 		    const char *param2,
 		    dipole_t *dipole);
 yana_complex_t free_air_impedance(yana_real_t f, yana_real_t r, yana_real_t solid_angle_div_by_pi);
+yana_real_t
+dipole_parse_magnitude(const char *str);
 
 
 #endif

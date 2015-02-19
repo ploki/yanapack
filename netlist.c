@@ -98,7 +98,7 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
 			  name,
 			  node1,
 			  node2,
-			  strtod(magnitude, NULL),
+			  dipole_parse_magnitude(magnitude),
 			  param1, param2, & new_dipole);
       vec_dipole_push_back(netlist->dipoles, new_dipole);
       if ( SUCCESS != status )

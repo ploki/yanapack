@@ -52,7 +52,11 @@ typedef enum
     UF_LOG,     // ( c1 -- c ) ln(c1)/ln(10)
     UF_ABS,     // ( c1 -- r ) modulus of c1
     UF_ARG,     // ( c1 -- r ) argument of c1
+    UF_ANGLE,     // ( r1 r2 -- r ) angle difference
     UF_DEG,     // ( r -- r ) rad to deg
+    UF_PDELAY,   // ( r -- r ) phase to delay
+    UF_PREV_STEP, // ( -- ) jump to previous simulation step
+    UF_NEXT_STEP, // ( -- ) jump to next simulation step
     UF_IMAG,    // ( c1 -- r ) imag part of c1
     UF_REAL,    // ( c1 -- r ) real part of c1
     UF_PI,      // ( -- r ) pi
@@ -63,6 +67,7 @@ typedef enum
     UF_DBSPL,      // ( c -- r ) convert to dBSPL
     UF_DOT,     // ( v -- ) print
     UF_DUP,     // ( v -- v v ) dup
+    UF_SWAP,    // ( v1 v2 -- v2 v1 ) swap head with head-1
     UF_VALUE_REAL,
     UF_VALUE_COMPLEX,
     UF_VALUE_SIMULATION,
@@ -108,6 +113,15 @@ uforth_token_free(uforth_token_t *token)
   if ( token )
     free( token->symbol );
   free(token);
+}
+
+static void
+token_swap(uforth_token_t *t1, uforth_token_t *t2)
+{
+  uforth_token_t tmp;
+  memcpy(&tmp, t1, sizeof tmp);
+  memcpy(t1, t2, sizeof tmp);
+  memcpy(t2, &tmp, sizeof tmp);
 }
 
 void
@@ -187,8 +201,16 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_ABS;
 	  else if ( 0 == strcasecmp(token, "ARG") )
 	    token_type = UF_ARG;
+	  else if ( 0 == strcasecmp(token, "ANGLE") )
+	    token_type = UF_ANGLE;
 	  else if ( 0 == strcasecmp(token, "DEG") )
 	    token_type = UF_DEG;
+	  else if ( 0 == strcasecmp(token, "PDELAY") )
+	    token_type = UF_PDELAY;
+	  else if ( 0 == strcasecmp(token, "<<<") || 0 == strcmp(token, "PREV"))
+	    token_type = UF_PREV_STEP;
+	  else if ( 0 == strcasecmp(token, ">>>") || 0 == strcmp(token, "PREV") )
+	    token_type = UF_NEXT_STEP;
 	  else if ( 0 == strcasecmp(token, "IMAG") )
 	    token_type = UF_IMAG;
 	  else if ( 0 == strcasecmp(token, "REAL") )
@@ -210,6 +232,8 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_DOT;
 	  else if ( 0 == strcasecmp(token, "DUP") )
 	    token_type = UF_DUP;
+	  else if ( 0 == strcasecmp(token, "SWAP") )
+	    token_type = UF_SWAP;
 	  else
 	    {
 	      char *endptr;
@@ -398,10 +422,12 @@ uforth_execute_step(uforth_context_t *uf_ctx,
   yana_real_t r1, r2;
   yana_complex_t c1, c2;
   yana_real_t f = simulation_context_get_f(sc, i);
+  int s = simulation_context_get_n_samples(sc);
   uforth_token_type_t head_type;
   bool printed = false;
+  bool end = false;
   for ( token = uf_ctx->first ;
-	token ;
+	token && !end;
 	token = token->next )
     {
       switch (token->type)
@@ -464,6 +490,46 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  POP_REAL("( X -- x ) DEG", r1);
 	  PUSH_REAL("DEG", 180. * r1 / M_PI );
 	  break;
+	case UF_ANGLE:
+	  POP_REAL("( x X -- x ) ANGLE", r2);
+	  POP_REAL("( X x -- x ) ANGLE", r1);
+	  if ( fabs(r1-r2-2.*M_PI) > fabs(r1-r2) )
+	    {
+	      if ( fabs(r1-r2+2.*M_PI) > fabs(r1-r2) )
+		PUSH_REAL("ANGLE", r1-r2);
+	      else
+		PUSH_REAL("ANGLE", r1-r2+2.*M_PI);
+	    }
+	  else
+	    {
+	      if ( fabs(r1-r2+2.*M_PI) > fabs(r1-r2-2.*M_PI) )
+		PUSH_REAL("ANGLE", r1-r2-2.*M_PI);
+	      else
+		PUSH_REAL("ANGLE", r1-r2+2.*M_PI);
+	    }
+	  break;
+	case UF_PDELAY:
+	  POP_REAL("( X -- x ) PDELAY", r1);
+	  PUSH_REAL("PDELAY",  - r1 /( 2. * M_PI * f ) );
+	  break;
+	case UF_PREV_STEP:
+	  if ( 0 == i )
+	    {
+	      end = true;
+	      break;
+	    }
+	  --i;
+	  f = simulation_context_get_f(sc, i);
+	  break;
+	case UF_NEXT_STEP:
+	  if ( s-1 == i )
+	    {
+	      end = true;
+	      break;
+	    }
+	  ++i;
+	  f = simulation_context_get_f(sc, i);
+	  break;
 	case UF_IMAG:
 	  POP_COMPLEX("( X -- x ) IMAG", c1);
 	  PUSH_REAL("IMAG", cimag(c1));
@@ -516,6 +582,15 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  PUSH_COMPLEX("DUP", c1);
 	  PUSH_COMPLEX("DUP", c1);
 	  break;
+	case UF_SWAP:
+	  if ( uf_ctx->stack_pos < 2 )
+	    {
+	      fprintf(stderr, "ERROR: SWAP: Stack underflow\n");
+	      return FAILURE;
+	    }
+	  token_swap(&uf_ctx->stack[uf_ctx->stack_pos-1],
+		     &uf_ctx->stack[uf_ctx->stack_pos-2]);
+	  break;
 	case UF_VALUE_REAL:
 	  PUSH_REAL("real lit", token->r);
 	  break;
@@ -549,7 +624,8 @@ uforth_execute_step(uforth_context_t *uf_ctx,
   printed=false;
   if ( uf_ctx->stack_pos != 0 )
     {
-      fprintf(stderr, "WARNING: stack not empty at the end of the processing\n");
+      if ( !end )
+	fprintf(stderr, "WARNING: stack not empty at the end of the processing\n");
       uf_ctx->stack_pos = 0;
     }
   return SUCCESS;

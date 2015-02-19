@@ -110,7 +110,7 @@ status_t dipole_init_inductor(dipole_t *dipole)
   int i, s;
   yana_real_t series_resistor = 0.L;
   if ( dipole->param1 )
-    series_resistor = strtod(dipole->param1, 0);
+    series_resistor = dipole_parse_magnitude(dipole->param1);
 
   for ( i = 0, s = simulation_context_get_n_samples(dipole->sc) ;
 	i < s ;
@@ -212,7 +212,7 @@ status_t dipole_init_port(dipole_t *dipole)
   yana_real_t actual_length_div_radius;
 
   if ( dipole->param1 )
-    surface = strtod(dipole->param1, NULL);
+    surface = dipole_parse_magnitude(dipole->param1);
 
   if ( dipole->param2 )
     {
@@ -268,7 +268,7 @@ status_t dipole_init_free_air(dipole_t *dipole)
   yana_real_t r = dipole->magnitude;
   yana_real_t solid_angle_div_by_pi = 2.L;
   if ( NULL != dipole->param1 )
-    solid_angle_div_by_pi = strtod(dipole->param1, 0);
+    solid_angle_div_by_pi = dipole_parse_magnitude(dipole->param1);
 
   // = rho * w / ( 2 * pi * r )
   // = rho * f / r
@@ -349,4 +349,60 @@ status_t dipole_new(simulation_context_t *sc,
   if (SUCCESS != status )
     dipole_free(dipole);
   return status;
+}
+
+yana_real_t
+dipole_parse_magnitude(const char *str)
+{
+  char *tmp;
+  yana_real_t res;
+  res = strtod(str, &tmp);
+  if ( NULL == tmp || '\0' == tmp[0] )
+    return res;
+  else if ( 0 == strcmp(tmp, "p") )
+    return res * 1e-12;
+  else if ( 0 == strcmp(tmp, "n") )
+    return res * 1e-9;
+  else if ( 0 == strcmp(tmp, "u") || 0 == strcmp(tmp, "µ") )
+    return res * 1e-6;
+  else if ( 0 == strcmp(tmp, "m") )
+    return res * 1e-3;
+  else if ( 0 == strcmp(tmp, "c") )
+    return res * 1e-2;
+  else if ( 0 == strcmp(tmp, "d") )
+    return res * 1e-1;
+  else if ( 0 == strcmp(tmp, "k") )
+    return res * 1e3;
+  else if ( 0 == strcmp(tmp, "M") || 0 == strcmp(tmp, "meg") )
+    return res * 1e6;
+  else if ( 0 == strcmp(tmp, "G") )
+    return res * 1e9;
+  else if ( 0 == strcmp(tmp, "T") )
+    return res * 1e12;
+
+  // length
+  else if ( 0 == strcmp(tmp, "mm") )
+    return res / 1000.;
+  else if ( 0 == strcmp(tmp, "cm") )
+    return res / 100.;
+  else if ( 0 == strcmp(tmp, "dm") )
+    return res / 10.;
+
+  // surface
+  else if ( 0 == strcmp(tmp, "mm^2") || 0 == strcmp(tmp, "mm²") )
+    return res / ( 1000. * 1000. );
+  else if ( 0 == strcmp(tmp, "cm^2") || 0 == strcmp(tmp, "cm²") )
+    return res / ( 100. * 100. );
+  else if ( 0 == strcmp(tmp, "dm^2") || 0 == strcmp(tmp, "dm²") )
+    return res / ( 10. * 10. );
+
+  // volume
+  else if ( 0 == strcmp(tmp, "L") )
+    return res * 1e-3;
+
+  else
+    {
+      fprintf(stderr, "WARNING: failed to parse real value: %s\n", str);
+      return res;
+    }
 }

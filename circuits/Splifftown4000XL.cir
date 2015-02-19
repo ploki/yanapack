@@ -4,39 +4,72 @@
 
 Eg    1 0   2.83
 Rbsc  1 2   4.9
-Lbsc  1 2   1.4e-3 0.36
-L1    2 3   0.8e-3 0.22
-C1    3 0   22e-6
+Lbsc  1 2   1.4m 0.36
+L1    2 3   0.8m 0.22
+C1    3 0   22u
 R1    3 4   6
-C3    4 0   22e-6
-LeW   3 5   0.96e-3 5.7
+C3    4 0   22u
+LeW   3 5   0.96m 5.7
 TlW   5 6   10.1
 
 TrW   6 0   1
 RrmsW 6 0   1.25
-CmmsW 6 0   50.5e-3
-LcmsW 6 0   0.95e-3
-GlW   6 0   0.035
+CmmsW 6 0   50.5m
+LcmsW 6 0   0.95m
+GlW   6 0   350cm²
 
-GrW   7 0   0.035
-Box   7 8   0.037
-ZrW1  8 9  0.035 ai
-ZrW2  9 0 0.035 ai
+GrW   7 0  350cm²
+Box   7 8   37L
+ZrW1  8 9  350cm² ai
+ZrW2  9 0  350cm² ai
 
 RbT   1 11  3.25
-C4    11 12 5.6e-6
-L2    12 0  0.36e-3 0.14
+C4    11 12 5.6u
+L2    12 0  0.36m 0.14
 R3    12 0  18
 ReT   12 13 4.7
-LeT   13 14 0.006e-3
+LeT   13 14 0.006m
 TlT   14 0  3.5
 
 TrT   15 0  1
 RrmsT 15 0  2.4390
-CmmsT 15 0  0.45e-3
-LcmsT 15 0  0.23e-3
-GlT   15 0  0.0008
+CmmsT 15 0  0.45m
+LcmsT 15 0  0.23m
+GlT   15 0  8cm²
 
-GrT   16 0  0.0008
-ZrT1  16 17 0.0008 ai
-ZrT2  17 0 0.0008 ai
+GrT   16 0  8cm²
+ZrT1  16 17 8cm² ai
+ZrT2  17 0  8cm² ai
+
+
+* set logscale x
+* set mxtics
+* set mytics
+* set style line 12 lc rgb '#ddccdd' lt 1 lw 1.5
+* set style line 13 lc rgb '#ddccdd' lt 1 lw 0.5
+* set grid xtics mxtics ytics mytics back ls 12, ls 13
+* plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
+
+! frequency response /1m
+*. F .
+*. 1 2 FREEAIR
+*. DUP IZrW1 IZrT1 + * DBSPL .
+*. DUP IZrW1        * DBSPL .
+*.     IZrT1        * DBSPL .
+
+! phase delay
+*. F DUP .
+*. 1 SWAP / 1000 * DUP NEG . .
+*. 
+*. IZrW1 ARG PDELAY 1000 * .
+*. IZrT1 ARG PDELAY 1000 * .
+*. IZrW1 ARG .
+
+! group delay
+. >>> F <<< F - 2 PI * * 1000 /
+. DUP
+. F DUP .
+. 1 SWAP / 1000 * DUP NEG . .
+. >>> IZrW1 ARG <<< IZrW1 ARG ANGLE SWAP / NEG .
+. >>> IZrT1 ARG <<< IZrT1 ARG ANGLE SWAP / NEG .
+. IZrW1 ARG .

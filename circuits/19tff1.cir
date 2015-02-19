@@ -1,0 +1,29 @@
+* SEAS 19TFF1
+Eg 1 0 2.83
+
+Cnt 1 2 1e-6
+Rnt 2 0 6.8
+
+*Rnotch 1 3 15
+*Lnotch 3 4 1.30e-3 0.39
+*Cnotch 4 0 6.8e-6
+
+LeT   1 5 0.05e-3 6.2
+TlT   5 0 2.6
+
+TrT   6 0 1
+RrmsT 6 0 1.36485
+CmmsT 6 0 0.23e-3
+LcmsT 6 0 38.107e-6
+GlT   6 0 0.0004
+
+GrT   7 0 0.0004
+ZrT1  7 8 0.0004 ai
+ZrT2  8 0 0.0004 ai
+
+! impedance
+!. F . v1 v0 - IEg DIV DUP ABS . ARG DEG .
+
+!output
+. F .
+. 1 2 FREEAIR IZrT1 * DBSPL .

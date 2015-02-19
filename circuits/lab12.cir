@@ -1,0 +1,22 @@
+* EMINENCE LAB12
+Eg     1 0  2.83
+Lew    1 2  1.48e-3 4.29
+Tl1    2 0  15
+
+Tr1    3 0  1
+Rrms   3 0  .66
+Cmms   3 0  146e-3
+Lcms   3 0  .35e-3
+Gl1    3 0  0.05067
+
+Gr1    4 0  0.05067
+Zradf  4 5  0.05067 ai
+Zradr  5 0  0.05067 ai
+
+
+! impedance
+*. F . v1 v0 - IEg DIV DUP ABS . ARG DEG .
+
+!output
+. F .
+. 1 2 FREEAIR IZradf * 1.3 2 FREEAIR IZradr * - DBSPL .

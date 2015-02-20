@@ -1,0 +1,24 @@
+* SCAN-SPEAK D2010/8513 *
+Eg 3 0 2.83
+
+LeT   3 5 0.08m 5.7
+TlT   5 0 2.4
+
+TrT   6 0 1
+RrmsT 6 0 1
+CmmsT 6 0 0.25m
+LcmsT 6 0 .16m
+GlT   6 0 3.8cm²
+
+GrT   7 0 3.8cm²
+ZrT1  7 8 3.8cm² ai
+ZrT2  8 0 3.8cm² ai
+
+! impedance
+*. F . v1 v0 - IEg NEG DIV DUP ABS . ARG .
+*. F . v3 v0 - IEg NEG DIV ABS .
+
+!output
+. F .
+. 1 2 FREEAIR IZrT1 * DBSPL .
+

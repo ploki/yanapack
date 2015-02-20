@@ -169,7 +169,6 @@ compile(const char *buf, int stack_size,
 	    token != NULL ;
 	    token = strtok_r(NULL, " ", &tmp_k))
 	{
-	  char *symbol = NULL;
 	  yana_real_t r = 0.;
 	  uforth_token_type_t token_type;
 	  if ( 0 == strcasecmp(token, "FREEAIR") )
@@ -246,10 +245,9 @@ compile(const char *buf, int stack_size,
 		{
 		  token_type = UF_VALUE_SIMULATION;
 		  r = 0.;
-		  symbol = token;
 		}
 	    }
-	  uforth_token_t *new_token = uforth_token_new(token_type, symbol, r, 0.);
+	  uforth_token_t *new_token = uforth_token_new(token_type, token, r, 0.);
 	  *uf_ctx->last = new_token;
 	  uf_ctx->last = &new_token->next;
 	}
@@ -365,40 +363,40 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
 
 #define POP_REAL(_op_, _var_)						\
   do {									\
-    status_t status = pop_real(uf_ctx, &(_var_));			\
+    status = pop_real(uf_ctx, &(_var_));				\
     if ( SUCCESS != status )						\
       {									\
 	fprintf(stderr, "ERROR: "_op_" expects a real value\n");	\
-	return status;							\
+	goto loop_exit;							\
       }									\
   } while (0)
 #define POP_COMPLEX(_op_, _var_)					\
   do {									\
-    status_t status = pop_complex(uf_ctx, &(_var_));			\
+    status = pop_complex(uf_ctx, &(_var_));				\
     if ( SUCCESS != status )						\
       {									\
 	fprintf(stderr, "ERROR: "_op_" expects a complex value\n");	\
-	return status;							\
+	goto loop_exit;							\
       }									\
   } while (0)
 
 #define PUSH_REAL(_op_, _val_)						\
   do {									\
-    status_t status = push_real(uf_ctx, (_val_));			\
+    status = push_real(uf_ctx, (_val_));				\
     if ( SUCCESS != status )						\
       {									\
-	fprintf(stderr, "ERROR: on "_op_);				\
-	return status;							\
+	fprintf(stderr, "ERROR: on "_op_ "\n");				\
+	goto loop_exit;							\
       }									\
   } while (0)
 
 #define PUSH_COMPLEX(_op_, _val_)					\
   do {									\
-    status_t status = push_complex(uf_ctx, (_val_));			\
+    status = push_complex(uf_ctx, (_val_));				\
     if ( SUCCESS != status )						\
       {									\
-	fprintf(stderr, "ERROR: on "_op_);				\
-	return status;							\
+	fprintf(stderr, "ERROR: on "_op_ "\n");				\
+	goto loop_exit;							\
       }									\
   } while (0)
 
@@ -406,8 +404,9 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
   do {							\
     if ( uf_ctx->stack_pos < 1 )			\
       {							\
+	status = FAILURE;				\
 	fprintf(stderr, "ERROR: stack underflow\n");	\
-	return FAILURE;					\
+	goto loop_exit;					\
       }							\
     (_var_)=uf_ctx->stack[uf_ctx->stack_pos-1].type;	\
   } while (0)
@@ -418,6 +417,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 		    simulation_t *simulation,
 		    int i)
 {
+  status_t status = SUCCESS;
   uforth_token_t *token;
   yana_real_t r1, r2;
   yana_complex_t c1, c2;
@@ -586,17 +586,18 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  if ( uf_ctx->stack_pos < 2 )
 	    {
 	      fprintf(stderr, "ERROR: SWAP: Stack underflow\n");
-	      return FAILURE;
+	      status = FAILURE;
+	      goto loop_exit;
 	    }
 	  token_swap(&uf_ctx->stack[uf_ctx->stack_pos-1],
 		     &uf_ctx->stack[uf_ctx->stack_pos-2]);
 	  break;
 	case UF_VALUE_REAL:
-	  PUSH_REAL("real lit", token->r);
+	  PUSH_REAL("real literal", token->r);
 	  break;
 	case UF_VALUE_COMPLEX:
 	  assert(!"not possible");
-	  PUSH_REAL("complex lit", token->c);
+	  PUSH_REAL("complex literal", token->c);
 	  break;
 	case UF_VALUE_SIMULATION:
 	  {
@@ -606,29 +607,53 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      {
 		fprintf(stderr, "ERROR: syntax error on symbol '%s'\n", token->symbol);
 		fprintf(stderr, "HINT: dipoles start with 'I' and nodes start with 'v'\n");
-		return FAILURE;
+		status = FAILURE;
+		goto loop_exit;
 	      }
 	    sim_array = simulation_result(simulation, token->symbol+1);
 	    if ( NULL == sim_array )
 	      {
 		fprintf(stderr, "ERROR: Unknown symbol '%s'\n", token->symbol);
-		return FAILURE;
+		status = FAILURE;
+		goto loop_exit;
 	      }
 	    PUSH_COMPLEX("sim", sim_array[i]);
 	  }
 	  break;
 	}
     }
+ loop_exit:
+  
   if (printed)
     fprintf(stdout, "\n");
-  printed=false;
-  if ( uf_ctx->stack_pos != 0 )
+
+  if ( SUCCESS != status && NULL != token )
+    {
+      fputs("ERROR: is here: ", stderr);
+      uforth_token_t *t;
+      for ( t = uf_ctx->first ;
+	    t != NULL ;
+	    t = t->next )
+	{
+	  if ( t == token )
+	    {
+	      fprintf(stderr, ">>>%s<<<", t->symbol);
+	      break;
+	    }
+	  else
+	    {
+	      fprintf(stderr, "%s ", t->symbol);
+	    }
+	}
+      fputs("\n", stderr);
+    }
+  else if ( uf_ctx->stack_pos != 0 )
     {
       if ( !end )
 	fprintf(stderr, "WARNING: stack not empty at the end of the processing\n");
       uf_ctx->stack_pos = 0;
     }
-  return SUCCESS;
+  return status;
 }
 
 status_t

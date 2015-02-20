@@ -10,14 +10,14 @@ LeW  1 3 .056m 6.5
 TlW  3 0 7.227
 
 TrW   4 0 1
-RrmsW 4 0 .712294
+RrmsW 4 0 1.4039
 CmmsW 4 0 9.5m
-LcmsW 4 0 1.12651m
-GlW   4 0 0.0132
+LcmsW 4 0 1.068m
+GlW   4 0 132cm²
 
-GrW   5 0 0.0132
-ZrW1  5 6 0.0132 ai
-ZrW2  6 0 0.0132 ai
+GrW   5 0 132cm²
+ZrW1  5 6 132cm² ai
+ZrW2  6 0 132cm² ai
 
 ! impedance
 . F . v1 v0 - IEg DIV DUP ABS . ARG DEG .

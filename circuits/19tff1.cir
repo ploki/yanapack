@@ -1,29 +1,35 @@
 * SEAS 19TFF1
-Eg 1 0 2.83
+Eg 3 0 2.83
 
-Cnt 1 2 1u
-Rnt 2 0 6.8
+*C1hp 1 2 3.9u
+*L1hp 2 0 .2m .10
+*C2hp 2 3 12u
+
+*Cnt 3 4 1.2u
+*Rnt 4 0 6.1
 
 *Rnotch 1 3 15
 *Lnotch 3 4 1.30m 0.39
 *Cnotch 4 0 6.8u
 
-LeT   1 5 0.05m 6.2
+LeT   3 5 0.05m 6.2
 TlT   5 0 2.6
 
 TrT   6 0 1
-RrmsT 6 0 1.36485
+RrmsT 6 0 .73268
 CmmsT 6 0 0.23m
 LcmsT 6 0 38.107u
-GlT   6 0 0.0004
+GlT   6 0 4cm²
 
-GrT   7 0 0.0004
-ZrT1  7 8 0.0004 ai
-ZrT2  8 0 0.0004 ai
+GrT   7 0 4cm²
+ZrT1  7 8 4cm² ai
+ZrT2  8 0 4cm² ai
 
 ! impedance
-!. F . v1 v0 - IEg DIV DUP ABS . ARG DEG .
+*. F . v1 v0 - IEg NEG DIV DUP ABS . ARG .
+. F . v3 v0 - IEg NEG DIV ABS .
 
 !output
-. F .
-. 1 2 FREEAIR IZrT1 * DBSPL .
+*. F .
+*. 1 2 FREEAIR IZrT1 * DBSPL .
+

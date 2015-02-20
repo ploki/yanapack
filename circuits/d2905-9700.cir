@@ -1,0 +1,24 @@
+* SCAN-SPEAK D2905/9700 *
+Eg 3 0 2.83
+
+LeT   3 5 0.01m 4.7
+TlT   5 0 3.5
+
+TrT   6 0 1
+RrmsT 6 0 2.439
+CmmsT 6 0 0.45m
+LcmsT 6 0 .23m
+GlT   6 0 8.5cm²
+
+GrT   7 0 8.5cm²
+ZrT1  7 8 8.5cm² ai
+ZrT2  8 0 8.5cm² ai
+
+! impedance
+*. F . v1 v0 - IEg NEG DIV DUP ABS . ARG .
+*. F . v3 v0 - IEg NEG DIV ABS .
+
+!output
+. F .
+. 1 2 FREEAIR IZrT1 * DBSPL .
+

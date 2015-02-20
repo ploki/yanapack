@@ -51,11 +51,11 @@ ZrT2  17 0  8cm² ai
 * plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
 
 ! frequency response /1m
-*. F .
-*. 1 2 FREEAIR
-*. DUP IZrW1 IZrT1 + * DBSPL .
-*. DUP IZrW1        * DBSPL .
-*.     IZrT1        * DBSPL .
+. F .
+. 1 2 FREEAIR
+. DUP IZrW1 IZrT1 + * DBSPL .
+. DUP IZrW1        * DBSPL .
+.     IZrT1        * DBSPL .
 
 ! phase delay
 *. F DUP .
@@ -66,10 +66,10 @@ ZrT2  17 0  8cm² ai
 *. IZrW1 ARG .
 
 ! group delay
-. >>> F <<< F - 2 PI * * 1000 /
-. DUP
-. F DUP .
-. 1 SWAP / 1000 * DUP NEG . .
-. >>> IZrW1 ARG <<< IZrW1 ARG ANGLE SWAP / NEG .
-. >>> IZrT1 ARG <<< IZrT1 ARG ANGLE SWAP / NEG .
-. IZrW1 ARG .
+*. >>> F <<< F - 2 PI * * 1000 /
+*. DUP
+*. F DUP .
+*. 1 SWAP / 1000 * DUP NEG . .
+*. >>> IZrW1 ARG <<< IZrW1 ARG ANGLE SWAP / NEG .
+*. >>> IZrT1 ARG <<< IZrT1 ARG ANGLE SWAP / NEG .
+*. IZrW1 ARG .

@@ -1,13 +1,23 @@
 * SURROUND based on Fostex FF165WK and SEAS 19TTF1
 
+* amp *
 Eg 1 0 2.83
+
+** midbass **
+
+* bsc *
 Lbsc 1 2 0.8m .22
 Rbsc 1 2 3.3
 
+* low pass *
 Llp  2 3 .6m .21
-Clp  3 0 3.9u
+Clp  3 0 5.6u
+
+* imp comp *
 Cnw  3 4 1.2u
 Rnw  4 0 6.8
+
+* driver *
 LeW  3 5 .056m 6.5
 
 TlW  5 0 7.227
@@ -23,29 +33,28 @@ Box   7 8 9L
 ZrW1  8 9 132cm² ai
 ZrW1  9 0 132cm² ai
 
-Chp   1 10 3.9u
-Lhp   10 0 .20m .10
-Chp2  10 11 12u
+** tweeter **
 
-* Cnt   10 11 1.2u
-* Rnt   11 0 6.8
+Ratt 1 10 5.6
+Chp 10 11 3.3u
+Lhp 11 0 .15m .09
 
-* Rnotch 10 16 15
-* Lnotch 16 17 1.30m 0.39
-* Cnotch 17 0 6.8u
+*Cnt 11 12 2.2u
+*Rnt 12 0 4.7
 
-LeT   11 12 0.05m 6.2
-TlT   12 0 2.6
+LeT   11 13 0.05m 4.8
+TlT   13 0 3.5
 
-TrT   13 0 1
-RrmsT 6 0 .73268
-CmmsT 13 0 0.23m
-LcmsT 13 0 38.107u
-GlT   13 0 4cm²
+TrT   14 0 1
+RrmsT 14 0 .50
+CmmsT 14 0 0.25m
+LcmsT 14 0 .23m
+GlT   14 0 7.6cm²
 
-GrT   14 0 4cm²
-ZrT1  14 15 4cm² ai
-ZrT2  15 0 4cm² ai
+GrT   15 0 7.6cm²
+ZrT1  15 16 7.6cm² ai
+ZrT2  16 0 7.6cm² ai
+
 
 * set logscale x
 * set mxtics
@@ -59,8 +68,8 @@ ZrT2  15 0 4cm² ai
 . F .
 . 1 2 FREEAIR
 . DUP IZrW1 IZrT1 - * DBSPL .
-. DUP IZrW1        * DBSPL .
-.     IZrT1        * DBSPL .
+. DUP IZrW1 * DBSPL .
+.     IZrT1 * DBSPL .
 
 !phase
 *. F .

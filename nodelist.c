@@ -144,8 +144,8 @@ status_t nodelist_new(simulation_context_t *sc, netlist_t *netlist, nodelist_t *
     {
       if ( vec_node(nodelist->nodes)[i].n_connections < 2 )
 	{
-	  fprintf(stderr," node %d connected to only %d dipoles\n",i,vec_node(nodelist->nodes)[i].n_connections);
-	  assert(0);
+	  fprintf(stderr,"ERROR: Node %s connected to only %d dipole\n",vec_node(nodelist->nodes)[i].name,vec_node(nodelist->nodes)[i].n_connections);
+	  return FAILURE;
 	}
     }
 
@@ -176,7 +176,7 @@ void nodelist_dump(nodelist_t *nodelist)
   printf("\n");
   for ( i = 0 ; i < vec_node_count(nodelist->nodes) ; ++i )
     {
-      printf("n%d:\t",i);
+      printf("%s:\t", vec_node(nodelist->nodes)[i].name);
       node_dump(&vec_node(nodelist->nodes)[i], nodelist->n_dipoles);
     }
 }

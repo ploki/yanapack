@@ -155,14 +155,14 @@ int main(int argc, char **argv)
       }
   if ( optind < argc )
     {
-      fprintf(stderr, "Spurious arguments");
+      fprintf(stderr, "ERROR: Spurious arguments");
       usage(stderr, argv[0]);
       exit(EXIT_FAILURE);
     }
 
   if ( NULL == netlist_file )
     {
-      fprintf(stderr, "Missing netlist\n");
+      fprintf(stderr, "ERROR: Missing netlist\n");
       usage(stderr, argv[0]);
       exit(EXIT_FAILURE);
     }
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
   simulation_context_t *sc = simulation_context_new(from, to, steps_per_decade);
   if ( NULL == sc )
     {
-      fprintf(stderr, "Failed to create a simulation context\n");
+      fprintf(stderr, "ERROR: Failed to create a simulation context\n");
       exit(EXIT_FAILURE);
     }
   struct stat st;
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
   char *netlist_buf = malloc(st.st_size+1);
   if ( NULL == netlist_buf )
     {
-      fprintf(stderr, "ENOMEM\n");
+      fprintf(stderr, "ERROR: ENOMEM\n");
       exit(EXIT_FAILURE);
     }
   FILE *f = fopen(netlist_file, "r");
@@ -207,22 +207,28 @@ int main(int argc, char **argv)
   status = netlist_new(sc, netlist_buf, &netlist);
   if ( SUCCESS != status )
     {
-      fprintf(stderr, "failed to load netlist\n");
+      fprintf(stderr, "ERROR: Failed to load netlist\n");
       exit(EXIT_FAILURE);
     }
   status = nodelist_new(sc, netlist, &nodelist);
   if ( SUCCESS != status )
     {
-      fprintf(stderr, "failed to create nodelist\n");
+      fprintf(stderr, "ERROR: Failed to create nodelist\n");
       exit(EXIT_FAILURE);
     }
   status = simulation_new(sc, nodelist, &simulation);
   if ( SUCCESS != status )
     {
-      fprintf(stderr, "failed to create nodelist\n");
+      fprintf(stderr, "ERROR: Failed to create simulation\n");
       exit(EXIT_FAILURE);
     }
 
+  if ( interactive )
+    {
+      fprintf(stderr,
+	      "YANAPACK: Yet Another Nodal Analysis PACKage\n"
+	      "INFO: running simulation on %s\n", netlist_file);
+    }
   simulation_set_values(simulation);
   simulation_solve(simulation);
 
@@ -243,13 +249,11 @@ int main(int argc, char **argv)
 
   if ( interactive )
     {
-      fputs("YANAPACK: Yet Another Nodal Analysis PACKage\n", stderr);
       char *line;
       using_history();
       while ( NULL != (line = readline("yanapack> ")) )
 	{
 	  bool run = false;
-	  bool ok = true;
 	  if ( 0 == strcasecmp(line, "LIST") )
 	    fputs(netlist_buf, stderr);
 	  else if ( 0 == strcasecmp(line, "NETLIST") )
@@ -272,24 +276,12 @@ int main(int argc, char **argv)
 		status = uforth_compile(netlist_buf, 1000, &uf_ctx);
 	      else
 		status = uforth_compile_command(line, 1000, &uf_ctx);
-	      if ( SUCCESS != status )
+	      if ( SUCCESS == status )
 		{
-		  ok = false;
-		  fputs("ERROR: compilation\n", stderr);
-		}
-	      else
-		{
-		  status = uforth_execute(uf_ctx, sc, simulation);
-		  if ( SUCCESS != status )
-		    {
-		      ok = false;
-		      fputs("ERROR: execution\n", stderr);
-		    }
+		  uforth_execute(uf_ctx, sc, simulation);
 		  uforth_free(uf_ctx);
 		}
 	    }
-	  if (ok)
-	    fputs("OK\n", stderr);
 	  if ( line[0] != '\0' )
 	    add_history(line);
 	  free(line);

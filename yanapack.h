@@ -50,11 +50,20 @@ typedef enum
 #define YANA_C   (346.1L)
 #endif
 
+#define YANA_RHO_C (YANA_RHO*YANA_C)
+
 // N.s.m^-2, viscosity coefficient
 #define YANA_MU         (1.86e-5L)
 
-#define YANA_FREE_AIR_K (0.307L)
-#define YANA_FLANGED_K  (0.425L)
+#if 1
+// beranek p. 121 eq. 4.5 and 4.8
+# define YANA_FREE_AIR_K (0.640L)
+# define YANA_FLANGED_K  (0.850L)
+#else
+// don't remember the source
+# define YANA_FREE_AIR_K (0.307L)
+# define YANA_FLANGED_K  (0.425L)
+#endif
 
 
 #if 1

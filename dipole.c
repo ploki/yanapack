@@ -183,9 +183,9 @@ status_t dipole_init_radiator(dipole_t *dipole)
   */
   yana_real_t magnitude ;
   if ( acoustical == realm )
-    magnitude = YANA_RHO * YANA_C / surface ;
+    magnitude = YANA_RHO_C / surface ;
   else
-    magnitude = YANA_RHO * YANA_C * surface ;
+    magnitude = YANA_RHO_C * surface ;
 
   yana_real_t a = sqrt( surface / M_PI );
 
@@ -206,13 +206,17 @@ status_t dipole_init_port(dipole_t *dipole)
 {
   //[P]idx node1 node2 length surface kk ( kk: correction factor: k:free air K:flanged)
   int i, s;
-  yana_real_t surface = 0;
-  yana_real_t k1 = YANA_FREE_AIR_K, k2 = YANA_FLANGED_K, k;
+  yana_real_t surface = 0, a = 0;
+  yana_real_t k1 = YANA_FREE_AIR_K, k2 = YANA_FLANGED_K, kk;
   yana_real_t length;
-  yana_real_t actual_length_div_radius;
-
+  yana_real_t actual_length;
+  enum { DAMPED, RESONANT } model = DAMPED ;
+  
   if ( dipole->param1 )
-    surface = dipole_parse_magnitude(dipole->param1);
+    {
+      surface = dipole_parse_magnitude(dipole->param1);
+      a = sqrt(surface/M_PI);
+    }
 
   if ( dipole->param2 )
     {
@@ -220,18 +224,37 @@ status_t dipole_init_port(dipole_t *dipole)
 	k1 = YANA_FLANGED_K;
       if ( dipole->param2[1] == 'k' )
 	k2 = YANA_FREE_AIR_K;
+      if ( dipole->param2[2] != '\0' && dipole->param2[2] == 'r' )
+	model = RESONANT;
     }
-  k = k1 + k2 ;
-  length = dipole->magnitude + ( k * sqrt(surface/M_PI) );
-  actual_length_div_radius = dipole->magnitude / sqrt(surface/M_PI);
+  kk = k1 + k2 ;
+  length = dipole->magnitude + ( kk * a );
+  actual_length = dipole->magnitude;
   for ( i = 0, s = simulation_context_get_n_samples(dipole->sc) ;
 	i < s ;
 	++ i )
     {
-      yana_real_t w = 2.L*M_PI*simulation_context_get_f(dipole->sc,i);
-      dipole->values[i] =
-	( actual_length_div_radius + 1.L ) * sqrt( 2.L * w * YANA_RHO * YANA_MU ) / ( M_PI * surface * surface )
-	+ I * ( YANA_RHO * YANA_C * tan( w * length / YANA_C )  / surface );
+      yana_real_t f = simulation_context_get_f(dipole->sc,i);
+      yana_real_t w = 2.L*M_PI*f;
+      yana_real_t k = w / YANA_C;
+#if 0
+      if ( a < 0.05L/sqrt(f) )
+	fprintf(stderr,"WARNING: Port %s: too small for %gHz\n", dipole->name, (double)f);
+      if ( a > 10/f )
+	fprintf(stderr,"WARNING: Port %s: too large for %gHz\n", dipole->name, (double)f);
+#endif
+
+      if ( RESONANT == model )
+	dipole->values[i] =
+	  // real part beranek p. 129 eq 4.23
+	  (actual_length/a + 1.L) * sqrt(2.L * w * YANA_RHO*YANA_MU) / surface
+	  // imag part beranek p. 120 eq 4.1
+	  + I * YANA_RHO_C * tan( k * length )  / surface;
+      else
+	dipole->values[i] =
+	  // beranek p. 129 eq 4.22, 4.23 and 4.23
+	  (actual_length/a + 1.L) * sqrt(2.L * w * YANA_RHO * YANA_MU) / surface
+	  + I * w * YANA_RHO * ( length ) / surface;
     }
   return SUCCESS;
 

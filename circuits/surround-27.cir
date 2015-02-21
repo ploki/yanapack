@@ -2,7 +2,7 @@
 
 * amp *
 Eg 1 0 2.83
-
+Rtrollo 1 3 1p
 ** midbass **
 
 * bsc *
@@ -29,8 +29,11 @@ LcmsW 6 0 1.068m
 GlW   6 0 132cm²
 
 GrW   7 0 132cm²
-Box   7 8 9L
-ZrW1  8 9 132cm² ai
+ZrWr  7 8 132cm² ai
+Box   8 9 15.83L
+ZPortr 8 p1 19.63cm² ai
+Port  p1 p2 6.7cm 19.63cm² kKd
+ZPort p2 9 19.63cm² ai
 ZrW1  9 0 132cm² ai
 
 ** tweeter **
@@ -67,9 +70,9 @@ ZrT2  16 0 7.6cm² ai
 ! frequency response /1m
 . F .
 . 1 2 FREEAIR
-. DUP IZrW1 IZrT1 - * DBSPL .
+. DUP IZrW1 IZPort - * DBSPL .
 . DUP IZrW1 * DBSPL .
-.     IZrT1 * DBSPL .
+.     IZPort * DBSPL .
 
 !phase
 *. F .

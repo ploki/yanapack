@@ -35,6 +35,7 @@
 #include <yanapack.h>
 
 typedef struct uforth_context uforth_context_t;
+typedef struct uforth_heap uforth_heap_t;
 
 status_t uforth_compile(const char *buf, int stack_size,
 			uforth_context_t **uf_ctxp);
@@ -47,8 +48,14 @@ void uforth_free(uforth_context_t *uf_ctx);
 status_t
 uforth_execute(uforth_context_t *uf_ctx,
 	       simulation_context_t *sc,
-	       simulation_t *simulation);
+	       simulation_t *simulation,
+	       uforth_heap_t *heap,
+	       yana_complex_t *resultp);
 
+uforth_heap_t *
+uforth_heap_new(void);
+void
+uforth_heap_free(uforth_heap_t *heap);
 
 
 #endif /* __YANAPACK_UFORTH_H__ */

@@ -33,6 +33,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <cirpp.h>
+
 void netlist_free(netlist_t *netlist)
 {
   int i;
@@ -48,8 +50,19 @@ void netlist_free(netlist_t *netlist)
 status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, netlist_t **netlistp)
 {
   status_t status;
+#if 0
   char *netlist_str = strdup(orig_netlist_str);
-  char *tmp1, *tmp2, *line;
+#else
+  char *netlist_str = NULL;
+  status = cirpp(orig_netlist_str, &netlist_str);
+  if ( SUCCESS != status )
+    {
+      fprintf(stderr, "ERROR: netlist preprocessor\n");
+      return status;
+    }
+  //fprintf(stderr, netlist_str);
+#endif
+  char *tmp1 = NULL, *tmp2 = NULL, *line;
   netlist_t *netlist = malloc( sizeof *netlist );
 
   netlist->sc = sc;

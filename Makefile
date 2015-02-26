@@ -5,15 +5,24 @@ OFILES = simulation_context.o \
 	simulation.o \
 	solver.o \
 	yana_map.o \
+	cirpp.o \
 	uforth.o \
 	stehfest.o
 
+COMMON_CFLAGS = `gsl-config --cflags` -fPIC -Wall -Werror -I.
+RELEASE_CFLAGS = $(COMMON_CFLAGS) -O9 -mfpmath=sse  -fopenmp
+DEBUG_CFLAGS = $(COMMON_CFLAGS) -O0 -ggdb3 
 
-CFLAGS= -fPIC -Wall -Werror -I. -O0 -ggdb3 `gsl-config --cflags`
+.PHONY: all debug
+
+all: CFLAGS = $(RELEASE_CFLAGS)
+debug:  CFLAGS = $(DEBUG_CFLAGS)
+all:binaries
+debug: binaries
 
 # -fopenmp
 
-all: libyanapack.so yanapack
+binaries: libyanapack.so yanapack
 
 libyanapack.so: $(OFILES)
 	gcc -shared $(OFILES) -o libyanapack.so `gsl-config --libs` -lgomp

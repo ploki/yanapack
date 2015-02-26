@@ -52,15 +52,6 @@ static inline yana_complex_t c_sub(yana_complex_t l, yana_complex_t r)
   return l - r;
 }
 
-static inline yana_complex_t c_add(yana_complex_t l, yana_complex_t r)
-{
-  assert( isfinite(creal(l)) );
-  assert( isfinite(cimag(l)) );
-  assert( isfinite(creal(r)) );
-  assert( isfinite(cimag(r)) );
-  return l + r;
-}
-
 static inline yana_complex_t c_div(yana_complex_t l, yana_complex_t r)
 {
   assert( isfinite(creal(l)) );

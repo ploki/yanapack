@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 
   if ( uf_ctx )
     {
-      status = uforth_execute(uf_ctx, sc, simulation);
+      status = uforth_execute(uf_ctx, sc, simulation, NULL, NULL);
       uforth_free(uf_ctx);
     }
 
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 		status = uforth_compile_command(line, 1000, &uf_ctx);
 	      if ( SUCCESS == status )
 		{
-		  uforth_execute(uf_ctx, sc, simulation);
+		  uforth_execute(uf_ctx, sc, simulation, NULL, NULL);
 		  uforth_free(uf_ctx);
 		}
 	    }

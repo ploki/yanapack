@@ -274,16 +274,33 @@ status_t dipole_init_box(dipole_t *dipole)
   return SUCCESS;
 }
 
-yana_complex_t free_air_impedance(yana_real_t f, yana_real_t r, yana_real_t solid_angle_div_by_pi)
+yana_complex_t free_air_impedance(yana_real_t f,
+				  yana_real_t r,
+				  yana_real_t solid_angle_div_by_pi)
 {
       yana_real_t w = 2.L * M_PI * f;
       yana_real_t mag = w * YANA_RHO / ( solid_angle_div_by_pi * M_PI * r );
       yana_real_t k = w / YANA_C;
-      //yana_complex_t imp = mag;
-      //yana_complex_t imp = mag * sin(k*r) + I * mag * cos(k*r);
-      yana_complex_t imp = I * mag * cexp(I * k * r);
+      yana_complex_t imp = -I * mag * cexp(I * k * r);
       return imp;
 }
+
+yana_complex_t free_air_dir_impedance(yana_real_t f,
+				      yana_real_t r,
+				      yana_real_t sd,
+				      yana_real_t theta)
+{
+  yana_real_t w = 2.L * M_PI * f;
+  yana_real_t k = w / YANA_C;
+  yana_real_t a_2 = sd/M_PI;
+  yana_real_t a = sqrt(a_2);
+  // beranek p. 254 eq 6.36
+  yana_complex_t d = theta == 0.L
+    ? 1
+    : 2.L * gsl_sf_bessel_J1(k*a*sin(theta)) / (k*a*sin(theta));
+  return -I * k * a_2 * YANA_RHO_C * cexp(-I*k*r) * d / (2.L*r*sd);
+}
+
 status_t dipole_init_free_air(dipole_t *dipole)
 {
   //[A]idx node1 node2 distance solid_angle_div_by_pi [ai] ( source to listener impedance  )
@@ -375,13 +392,22 @@ status_t dipole_new(simulation_context_t *sc,
 }
 
 yana_real_t
-dipole_parse_magnitude(const char *str)
+dipole_parse_magnitude_ext(const char *str, char **tmpp)
 {
   char *tmp;
   yana_real_t res;
+  size_t len = 0;
   res = strtod(str, &tmp);
+
+  if ( NULL != tmp )
+    len = strlen(tmp);
+  if ( NULL != tmpp )
+    *tmpp = tmp+len;
+  
   if ( NULL == tmp || '\0' == tmp[0] )
     return res;
+  else if ( 0 == strcmp(tmp, "f") )
+    return res * 1e-15;
   else if ( 0 == strcmp(tmp, "p") )
     return res * 1e-12;
   else if ( 0 == strcmp(tmp, "n") )
@@ -423,9 +449,22 @@ dipole_parse_magnitude(const char *str)
   else if ( 0 == strcmp(tmp, "L") )
     return res * 1e-3;
 
+  // angle
+  else if ( 0 == strcmp(tmp, "°") || 0 == strcasecmp(tmp, "deg") )
+    return M_PI * res / 180.;
+  
   else
     {
-      fprintf(stderr, "WARNING: failed to parse real value: %s\n", str);
+      if ( tmpp )
+	*tmpp = tmp;
+      else
+	fprintf(stderr, "WARNING: failed to parse real value: %s\n", str);
       return res;
     }
+}
+
+yana_real_t
+dipole_parse_magnitude(const char *str)
+{
+  return dipole_parse_magnitude_ext(str, NULL);
 }

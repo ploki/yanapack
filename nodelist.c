@@ -104,13 +104,19 @@ void nodelist_free(nodelist_t *nodelist)
   free(nodelist);
 }
 
-static void
+static status_t
 nodelist_set_connection(nodelist_t *nodelist, int dipole, const char *node_name, int sign)
 {
   node_t *node = node_get(nodelist, node_name);
-  assert( 0 == vec_int(node->connections)[dipole] );
+  if ( 0 != vec_int(node->connections)[dipole] )
+    {
+      fprintf(stderr, "ERROR: node %s connection for dipole %s is already made\n",
+	      node->name, vec_dipole(nodelist->netlist->dipoles)[dipole].name);
+      return FAILURE;
+    }
   vec_int(node->connections)[dipole] = sign;
   ++node->n_connections;
+  return SUCCESS;
 }
 
 static int name_cmp(const yana_pair_t *lhs, const yana_pair_t *rhs)
@@ -125,6 +131,7 @@ static void name_free(yana_pair_t *pair)
 
 status_t nodelist_new(simulation_context_t *sc, netlist_t *netlist, nodelist_t **nodelistp)
 {
+  status_t status;
   int n_dipoles = vec_dipole_count(netlist->dipoles);
   nodelist_t *nodelist = malloc( sizeof *nodelist );
   int i;
@@ -137,8 +144,12 @@ status_t nodelist_new(simulation_context_t *sc, netlist_t *netlist, nodelist_t *
 
   for ( i = 0 ; i < n_dipoles ; ++i )
     {
-      nodelist_set_connection(nodelist, i, vec_dipole(netlist->dipoles)[i].node1, 1);
-      nodelist_set_connection(nodelist, i, vec_dipole(netlist->dipoles)[i].node2, -1);
+      status = nodelist_set_connection(nodelist, i, vec_dipole(netlist->dipoles)[i].node1, 1);
+      if ( SUCCESS != status )
+	return status;
+      status = nodelist_set_connection(nodelist, i, vec_dipole(netlist->dipoles)[i].node2, -1);
+      if ( SUCCESS != status )
+	return status;
     }
   for ( i = 0 ; i < vec_node_count(nodelist->nodes) ; ++i )
     {

@@ -41,6 +41,7 @@
 typedef enum
   {
     UF_FREEAIR, // ( r1 r2 -- c )
+    UF_DIRIMP,  // ( r1 r2 r3 -- c )
     UF_MUL,     // ( c1 c2 -- c ) mul c1 by c2
     UF_DIV,     // ( c1 c2 -- c ) div c1 by c2
     UF_ADD,     // ( c1 c2 -- c ) add c1 to c2
@@ -48,6 +49,7 @@ typedef enum
     UF_NEG,     // ( c1 -- c ) -c1
     UF_EXP,     // ( c1 -- c ) e^c1
     UF_POW,     // ( c1 c2 -- c ) c1^c2
+    UF_SQRT,    // ( c1 -- c ) sqrt(c1)
     UF_LN,      // ( c1 -- c ) ln(c1)
     UF_LOG,     // ( c1 -- c ) ln(c1)/ln(10)
     UF_ABS,     // ( c1 -- r ) modulus of c1
@@ -67,6 +69,7 @@ typedef enum
     UF_DBSPL,      // ( c -- r ) convert to dBSPL
     UF_DOT,     // ( v -- ) print
     UF_DUP,     // ( v -- v v ) dup
+    UF_TO,      // ( v -- ) set a word in the heap
     UF_SWAP,    // ( v1 v2 -- v2 v1 ) swap head with head-1
     UF_VALUE_REAL,
     UF_VALUE_COMPLEX,
@@ -91,6 +94,11 @@ struct uforth_context
   uforth_token_t stack[];
 };
 
+struct uforth_heap
+{
+  yana_map_t *map;
+};
+
 uforth_token_t *
 uforth_token_new(uforth_token_type_t type,
 		 const char *symbol,
@@ -113,6 +121,60 @@ uforth_token_free(uforth_token_t *token)
   if ( token )
     free( token->symbol );
   free(token);
+}
+
+static void heap_entry_free(yana_pair_t *pair)
+{
+  uforth_token_free(pair->value);
+}
+static int heap_entry_compar(const yana_pair_t *lhs,
+			      const yana_pair_t *rhs)
+{
+  
+  return strcmp((const char*)lhs->key, (const char*)rhs->key);
+}
+uforth_heap_t *
+uforth_heap_new(void)
+{
+  uforth_heap_t *heap = calloc(1, sizeof *heap);
+  if ( NULL == heap )
+    return NULL;
+  heap->map = yana_map_new(heap_entry_compar, heap_entry_free);
+  if ( NULL == heap->map )
+    {
+      free(heap);
+      return NULL;
+    }
+  return heap;
+}
+
+const uforth_token_t *
+uforth_heap_get(uforth_heap_t *heap, const char *name)
+{
+  const yana_pair_t *pair = yana_map_get(heap->map, name);
+  if ( NULL == pair )
+    return NULL;
+  return pair->value;
+}
+void
+uforth_heap_set(uforth_heap_t *heap, const char *name, yana_complex_t value)
+{
+  uforth_token_t *token = uforth_token_new(UF_VALUE_COMPLEX, name, 0.L, value);
+  yana_pair_t *pair = yana_pair_new(token->symbol, token);
+  assert( NULL != pair );
+  yana_map_set(heap->map, pair);
+}
+void
+uforth_heap_remove(uforth_heap_t *heap, const char *name)
+{
+  yana_map_remove(heap->map, name);
+}
+
+void
+uforth_heap_free(uforth_heap_t *heap)
+{
+  yana_map_free(heap->map);
+  free(heap);
 }
 
 static void
@@ -154,7 +216,7 @@ compile(const char *buf, int stack_size,
   uf_ctx->first = NULL;
   uf_ctx->last = &uf_ctx->first;
   char *code_str = strdup(buf);
-  char *tmp_l, *tmp_k, *line, *token;
+  char *tmp_l = NULL, *tmp_k = NULL, *line, *token;
   for ( line = strtok_r(code_str, "\n", &tmp_l) ;
 	line != NULL ;
 	line = strtok_r(NULL, "\n", &tmp_l ))
@@ -162,6 +224,8 @@ compile(const char *buf, int stack_size,
       if ( search_dot )
 	{
 	  if ( '.' != line[0] )
+	    continue;
+	  if ( ' ' != line[1] )
 	    continue;
 	  ++line;
 	}
@@ -173,6 +237,8 @@ compile(const char *buf, int stack_size,
 	  uforth_token_type_t token_type;
 	  if ( 0 == strcasecmp(token, "FREEAIR") )
 	    token_type = UF_FREEAIR;
+	  else if ( 0 == strcasecmp(token, "DIRIMP") )
+	    token_type = UF_DIRIMP;
 	  else if ( 0 == strcasecmp(token, "MUL") ||
 		    0 == strcmp(token, "*") )
 	    token_type = UF_MUL;
@@ -192,6 +258,8 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_EXP;
 	  else if ( 0 == strcasecmp(token, "POW") )
 	    token_type = UF_POW;
+	  else if ( 0 == strcasecmp(token, "SQRT") )
+	    token_type = UF_SQRT;
 	  else if ( 0 == strcasecmp(token, "LN") )
 	    token_type = UF_LN;
 	  else if ( 0 == strcasecmp(token, "LOG") )
@@ -231,12 +299,14 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_DOT;
 	  else if ( 0 == strcasecmp(token, "DUP") )
 	    token_type = UF_DUP;
+	  else if ( 0 == strcasecmp(token, "TO") )
+	    token_type = UF_TO;
 	  else if ( 0 == strcasecmp(token, "SWAP") )
 	    token_type = UF_SWAP;
 	  else
 	    {
 	      char *endptr;
-	      r = strtod(token, &endptr);
+	      r = dipole_parse_magnitude_ext(token, &endptr);
 	      if ( NULL == endptr || *endptr == '\0' )
 		{
 		  token_type = UF_VALUE_REAL;
@@ -289,7 +359,7 @@ pop_real(uforth_context_t *uf_ctx, yana_real_t *rp)
       break;
     case UF_VALUE_COMPLEX:
       c = uf_ctx->stack[pos].c;
-      if ( abs(cimag(c)) > 0.000001 )
+      if ( fabs(cimag(c)) > 0.000001 )
 	{
 	  fprintf(stderr, "ERROR: stack element is complex, real was expected\n");
 	  return FAILURE;
@@ -415,17 +485,25 @@ static status_t
 uforth_execute_step(uforth_context_t *uf_ctx,
 		    simulation_context_t *sc,
 		    simulation_t *simulation,
+		    uforth_heap_t *heap,
+		    yana_complex_t *resultp,
 		    int i)
 {
   status_t status = SUCCESS;
   uforth_token_t *token;
-  yana_real_t r1, r2;
+  yana_real_t r1, r2, r3;
   yana_complex_t c1, c2;
-  yana_real_t f = simulation_context_get_f(sc, i);
-  int s = simulation_context_get_n_samples(sc);
+  yana_real_t f = sc?simulation_context_get_f(sc, i):0.L;
+  int s = sc?simulation_context_get_n_samples(sc):0;
   uforth_token_type_t head_type;
   bool printed = false;
   bool end = false;
+  bool free_heap = false;
+  if ( NULL == heap )
+    {
+      free_heap = true;
+      heap = uforth_heap_new();
+    }
   for ( token = uf_ctx->first ;
 	token && !end;
 	token = token->next )
@@ -436,6 +514,12 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  POP_REAL("( x X -- x ) FREEAIR", r2);
 	  POP_REAL("( X x -- x ) FREEAIR", r1);
 	  PUSH_COMPLEX("FREEAIR", free_air_impedance(f, r1, r2));
+	  break;
+	case UF_DIRIMP:
+	  POP_REAL("( x x X -- x ) FREEAIR", r3); // theta
+	  POP_REAL("( x X x -- x ) FREEAIR", r2); // r
+	  POP_REAL("( X x x -- x ) FREEAIR", r1); // Sd
+	  PUSH_COMPLEX("FREEAIR", free_air_dir_impedance(f, r2, r1, r3));
 	  break;
 	case UF_MUL:
 	  POP_COMPLEX("( x X -- x ) MUL", c2);
@@ -469,6 +553,10 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  POP_COMPLEX("( x X -- x ) POW", c2);
 	  POP_COMPLEX("( X x -- x ) POW", c1);
 	  PUSH_COMPLEX("POW", cpow(c1, c2));
+	  break;
+	case UF_SQRT:
+	  POP_COMPLEX("( X -- x ) SQRT", c1);
+	  PUSH_COMPLEX("SQRT", csqrt(c1));
 	  break;
 	case UF_LN:
 	  POP_COMPLEX("( X -- x ) LN", c1);
@@ -570,7 +658,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      POP_COMPLEX("( X -- ) DOT", c1);
 	      r1 = creal(c1);
 	      r2 = cimag(c1);
-	      if ( abs(r2) < 0.000001 )
+	      if ( fabs(r2) < 0.000001 )
 		fprintf(stdout, "%f\t", (double)r1);
 	      else
 		fprintf(stdout, "%f%+fi\t", (double)r1, (double)r2);
@@ -581,6 +669,23 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  POP_COMPLEX("( X -- x x ) DUP", c1);
 	  PUSH_COMPLEX("DUP", c1);
 	  PUSH_COMPLEX("DUP", c1);
+	  break;
+	case UF_TO:
+	  token=token->next;
+	  if ( NULL == token )
+	    {
+	      fprintf(stderr, "ERROR: TO: end of instructions stream\n");
+	      status = FAILURE;
+	      goto loop_exit;
+	    }
+	  if ( token->type != UF_VALUE_SIMULATION )
+	    {
+	      fprintf(stderr, "ERROR: TO: %s is not a valid word to be set\n", token->symbol);
+	      status = FAILURE;
+	      goto loop_exit;
+	    }
+	  POP_COMPLEX("(X -- ) TO", c1);
+	  uforth_heap_set(heap, token->symbol, c1);
 	  break;
 	case UF_SWAP:
 	  if ( uf_ctx->stack_pos < 2 )
@@ -602,22 +707,31 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	case UF_VALUE_SIMULATION:
 	  {
 	    yana_complex_t *sim_array;
-	    if ( ( token->symbol[0] != 'v' || !isdigit(token->symbol[1] ) ) &&
-		 ( token->symbol[0] != 'I' || isdigit(token->symbol[1] ) ) )
+	    const uforth_token_t *heap_token = heap_token = uforth_heap_get(heap, token->symbol);
+	    if ( NULL != heap_token )
 	      {
-		fprintf(stderr, "ERROR: syntax error on symbol '%s'\n", token->symbol);
-		fprintf(stderr, "HINT: dipoles start with 'I' and nodes start with 'v'\n");
-		status = FAILURE;
-		goto loop_exit;
+		PUSH_COMPLEX("heap word", heap_token->c);
 	      }
-	    sim_array = simulation_result(simulation, token->symbol+1);
-	    if ( NULL == sim_array )
+	    else
 	      {
-		fprintf(stderr, "ERROR: Unknown symbol '%s'\n", token->symbol);
-		status = FAILURE;
-		goto loop_exit;
+		if ( ( token->symbol[0] != 'v' || !isdigit(token->symbol[1] ) ) &&
+		     ( token->symbol[0] != 'I' || isdigit(token->symbol[1] ) ) )
+		  {
+		    fprintf(stderr, "ERROR: Unknown symbol '%s'\n", token->symbol);
+		    if ( sc )
+		      fprintf(stderr, "HINT: dipoles start with 'I' and nodes start with 'v'\n");
+		    status = FAILURE;
+		    goto loop_exit;
+		  }
+		sim_array = simulation_result(simulation, token->symbol+1);
+		if ( NULL == sim_array )
+		  {
+		    fprintf(stderr, "ERROR: Unknown symbol '%s'\n", token->symbol);
+		    status = FAILURE;
+		    goto loop_exit;
+		  }
+		PUSH_COMPLEX("sim", sim_array[i]);
 	      }
-	    PUSH_COMPLEX("sim", sim_array[i]);
 	  }
 	  break;
 	}
@@ -647,26 +761,46 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	}
       fputs("\n", stderr);
     }
-  else if ( uf_ctx->stack_pos != 0 )
+  else if ( uf_ctx->stack_pos != 0 && NULL == resultp )
     {
       if ( !end )
 	fprintf(stderr, "WARNING: stack not empty at the end of the processing\n");
       uf_ctx->stack_pos = 0;
     }
+
+  if ( SUCCESS == status && NULL != resultp)
+    {
+      if ( uf_ctx->stack_pos != 1 )
+	{
+	  fprintf(stderr, "ERROR: one result was expected and stack size is %d\n",
+		  uf_ctx->stack_pos);
+	  status = FAILURE;
+	}
+      else
+	POP_COMPLEX("RESULT", *resultp);
+    }
+  if ( free_heap )
+    uforth_heap_free(heap);
+  
   return status;
 }
 
 status_t
 uforth_execute(uforth_context_t *uf_ctx,
 	       simulation_context_t *sc,
-	       simulation_t *simulation)
+	       simulation_t *simulation,
+	       uforth_heap_t *heap,
+	       yana_complex_t *resultp)
 {
   int i, s;
   status_t status;
-  s = simulation_context_get_n_samples(sc);
+  if ( NULL == sc || NULL == simulation )
+    s = 1;
+  else
+    s = simulation_context_get_n_samples(sc);
   for ( i = 0 ; i < s ; ++i )
     {
-      status = uforth_execute_step(uf_ctx, sc, simulation, i);
+      status = uforth_execute_step(uf_ctx, sc, simulation, heap, resultp, i);
       if ( SUCCESS != status )
 	{
 	  fprintf(stderr, "ERROR: Execution failed\n");

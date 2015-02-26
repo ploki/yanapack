@@ -531,7 +531,7 @@ status_t simulation_kcl(simulation_t *simulation, int *current_line)
 	    }
 	  else
 	    assert(!"Error in nodelist");
-	  asprintf(&simulation->cells[*current_line][vec_node_count(simulation->nodelist->nodes) + i].dipole_name,state_str);
+	  simulation->cells[*current_line][vec_node_count(simulation->nodelist->nodes) + i].dipole_name = strdup(state_str);
 	  simulation->cells[*current_line][vec_node_count(simulation->nodelist->nodes) + i].state = state;
 	}
       ++processed_nodes;

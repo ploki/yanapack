@@ -31,6 +31,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <uforth.h>
 
@@ -115,7 +117,8 @@ subckt_begin(const char *name, FILE **current_stream)
   return sub;
 }
 
-void subckt_push_node(subckt_t *sub, const char *node)
+static void
+subckt_push_node(subckt_t *sub, const char *node)
 {
   char **tmp;
   sub->n_inputs++;
@@ -313,7 +316,7 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
   return status;
 }
 
-status_t
+static status_t
 cirpp_internal(const char *input_const, FILE *output)
 {
   char *input = strdup(input_const);
@@ -417,7 +420,7 @@ cirpp_internal(const char *input_const, FILE *output)
 }
 
 
-status_t
+static status_t
 cirpp(const char *input_const, char **outputp)
 {
   size_t size;
@@ -427,4 +430,98 @@ cirpp(const char *input_const, char **outputp)
   status = cirpp_internal(input_const, output);
   fclose(output);
   return status;
+}
+
+
+static
+status_t
+cirpp_load_internal(const char *netlist_file, int depth, FILE *output)
+{
+  status_t status = FAILURE;
+  struct stat st;
+  int ret;
+  char *netlist_buf, *tmp = NULL, *tmp2 = NULL, *line, *to_include;
+
+  if ( depth > 10 )
+    {
+      fprintf(stderr, "ERROR: too many recursions in .include\n");
+      return FAILURE;
+    }
+  
+  ret = stat(netlist_file, &st);
+  if (ret < 0 )
+    {
+      perror(netlist_file);
+      exit(EXIT_FAILURE);
+    }
+  netlist_buf = malloc(st.st_size+1);
+  if ( NULL == netlist_buf )
+    {
+      fprintf(stderr, "ERROR: ENOMEM\n");
+      exit(EXIT_FAILURE);
+    }
+  FILE *f = fopen(netlist_file, "r");
+  if ( NULL == f )
+    {
+      perror(netlist_file);
+      exit(EXIT_FAILURE);
+    }
+  size_t bytes = fread(netlist_buf, 1, st.st_size, f);
+  assert( bytes == st.st_size );
+  netlist_buf[st.st_size]='\0';
+
+  for ( line = strtok_r(netlist_buf, "\r\n", &tmp) ;
+	line != NULL ;
+	line = strtok_r(NULL, "\r\n", &tmp) )
+    {
+      if ( 0 ==  strncasecmp(line, ".include", sizeof(".include")-1) )
+	{
+	  line+=sizeof(".include")-1;
+	  if ( line[0] != ' ' && line[0] != '\t' )
+	    {
+	      fprintf(stderr, "ERROR: .include syntax error\n");
+	      status = FAILURE;
+	      goto end;
+	    }
+	  to_include = strtok_r(line, " \t", &tmp2);
+	  if ( NULL == to_include )
+	    {
+	      fprintf(stderr, "ERROR: .include syntax error: no file specified\n");
+	      status = FAILURE;
+	      goto end;
+	    }
+	  status = cirpp_load_internal(to_include, depth+1, output);
+	  if ( SUCCESS != status )
+	    goto end;
+	}
+      else
+	{
+	  fprintf(output, "%s\n", line);
+	}
+    }
+  status = SUCCESS;
+ end:
+  free(netlist_buf);
+  fclose(f);
+  return status;
+}
+
+status_t
+cirpp_load(const char *netlist_file, char **outputp)
+{
+  size_t size;
+  status_t status;
+  FILE *output;
+  char *tmpbuf;
+  output = open_memstream(&tmpbuf, &size);
+  status = cirpp_load_internal(netlist_file, 0, output);
+  fclose(output);
+  if ( SUCCESS != status )
+    goto end;
+  status = cirpp(tmpbuf, outputp);
+  
+ end:
+  free(tmpbuf);
+  return status;
+
 }

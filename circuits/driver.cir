@@ -1,0 +1,37 @@
+* electro-acoustic transducer model *
+
+.subckt driver in+ in- pd+ pd-
+******************************
+*spice syntax : .param
+*default parameters: SCANSPEAK 26W/8545G00
+*.param Le=.96m
+*.param Re=5.7m
+*.param Bl=10.1
+*.param Rms=0.80
+*.param Cms=0.95m
+*.param Mms=50.5m
+*.param Sd=350cm²
+
+* drop: V, flow: A
+Le                 in+    0   {Le}
+Re                   0    1   {Re}
+Glmotor              1  in-   {1 Bl /}
+Rmotor_linkage     in-    g   1T
+Grmotor              2    g   {1 Bl /}
+* drop: N, flow: m/s
+Rrms                 2    3   {Rms}
+Lmms                 3    4   {Mms}
+Ccms                 4    5   {Cms}
+Tldiaphragm          5    g   {Sd}
+Rdiaphragm_linkage   g  pd-   1T
+Trdiaphragm        pd+  pd-   1
+* drop: Pa, flow: m³/s
+.ends
+
+*driver example in spice syntax
+*Xlab12 1 0 2 0 driver param: Le=1.48m Re=4.29 Bl=15 Rms=1.515 Cms=0.35m Mms=146m Sd=506.7
+
+*driver example in yanapack syntax
+*Xlab12 1 0 2 0 driver param: { 1.48m TO Le 4.29 TO Re 15 TO Bl \
+*                               1.515 TO Rms 0.35m TO Cms 146m TO Mms \
+*                               506.7 TO Sd }

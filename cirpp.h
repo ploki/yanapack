@@ -33,6 +33,6 @@
 #define __YANAPACK_CIRPP_H__
 
 status_t
-cirpp(const char *input_const, char **outputp);
+cirpp_load(const char *netlist_file, char **outputp);
 
 #endif /* __YANAPACK_CIRPP_H__ */

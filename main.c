@@ -32,9 +32,8 @@
 #define _GNU_SOURCE 1
 #include <yanapack.h>
 #include <uforth.h>
+#include <cirpp.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
@@ -174,40 +173,24 @@ int main(int argc, char **argv)
       fprintf(stderr, "ERROR: Failed to create a simulation context\n");
       exit(EXIT_FAILURE);
     }
-  struct stat st;
-  int ret;
-  ret = stat(netlist_file, &st);
-  if (ret < 0 )
-    {
-      perror(netlist_file);
-      exit(EXIT_FAILURE);
-    }
-  char *netlist_buf = malloc(st.st_size+1);
-  if ( NULL == netlist_buf )
-    {
-      fprintf(stderr, "ERROR: ENOMEM\n");
-      exit(EXIT_FAILURE);
-    }
-  FILE *f = fopen(netlist_file, "r");
-  if ( NULL == f )
-    {
-      perror(netlist_file);
-      exit(EXIT_FAILURE);
-    }
-  size_t bytes = fread(netlist_buf, 1, st.st_size, f);
-  assert( bytes == st.st_size );
-  netlist_buf[st.st_size]='\0';
-  fclose(f);
 
   netlist_t *netlist;
   nodelist_t *nodelist;
   simulation_t *simulation;
   status_t status;
+  char *netlist_buf;
 
+  status = cirpp_load(netlist_file, &netlist_buf);
+  if ( SUCCESS != status )
+    {
+      fprintf(stderr, "ERROR: Failed to preprocess netlist\n");
+      exit(EXIT_FAILURE);
+    }
+  
   status = netlist_new(sc, netlist_buf, &netlist);
   if ( SUCCESS != status )
     {
-      fprintf(stderr, "ERROR: Failed to load netlist\n");
+      fprintf(stderr, "ERROR: Failed to parse netlist\n");
       exit(EXIT_FAILURE);
     }
   status = nodelist_new(sc, netlist, &nodelist);

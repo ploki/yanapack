@@ -43,6 +43,7 @@
 # define isfinite(x) (1)
 #endif
 
+#if 0
 static inline yana_complex_t c_sub(yana_complex_t l, yana_complex_t r)
 {
   assert( isfinite(creal(l)) );
@@ -78,7 +79,12 @@ static inline yana_complex_t c_let(yana_complex_t l)
   return l;
 }
   
-
+#else
+#define c_sub(l,r) ((l)-(r))
+#define c_div(l,r) ((l)/(r))
+#define c_mul(l,r) ((l)*(r))
+#define c_let(l) (l)
+#endif
 
 
 int cell_cmp(simulation_t *simulation, cell_t *lhs, cell_t *rhs)

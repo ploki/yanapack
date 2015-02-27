@@ -52,6 +52,12 @@ typedef enum
     UF_SQRT,    // ( c1 -- c ) sqrt(c1)
     UF_LN,      // ( c1 -- c ) ln(c1)
     UF_LOG,     // ( c1 -- c ) ln(c1)/ln(10)
+    UF_COS,
+    UF_SIN,
+    UF_TAN,
+    UF_ACOS,
+    UF_ASIN,
+    UF_ATAN,
     UF_ABS,     // ( c1 -- r ) modulus of c1
     UF_ARG,     // ( c1 -- r ) argument of c1
     UF_ANGLE,     // ( r1 r2 -- r ) angle difference
@@ -262,6 +268,18 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_SQRT;
 	  else if ( 0 == strcasecmp(token, "LN") )
 	    token_type = UF_LN;
+	  else if ( 0 == strcasecmp(token, "COS") )
+	    token_type = UF_COS;
+	  else if ( 0 == strcasecmp(token, "SIN") )
+	    token_type = UF_SIN;
+	  else if ( 0 == strcasecmp(token, "TAN") )
+	    token_type = UF_TAN;
+	  else if ( 0 == strcasecmp(token, "ACOS") )
+	    token_type = UF_ACOS;
+	  else if ( 0 == strcasecmp(token, "ASIN") )
+	    token_type = UF_ASIN;
+	  else if ( 0 == strcasecmp(token, "ATAN") )
+	    token_type = UF_ATAN;
 	  else if ( 0 == strcasecmp(token, "LOG") )
 	    token_type = UF_LOG;
 	  else if ( 0 == strcasecmp(token, "ABS") )
@@ -561,6 +579,31 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	case UF_LN:
 	  POP_COMPLEX("( X -- x ) LN", c1);
 	  PUSH_COMPLEX("LN", clog(c1));
+	  break;
+
+	case UF_COS:
+	  POP_COMPLEX("( X -- x ) COS", c1);
+	  PUSH_COMPLEX("COS", ccos(c1));
+	  break;
+	case UF_SIN:
+	  POP_COMPLEX("( X -- x ) SIN", c1);
+	  PUSH_COMPLEX("SIN", csin(c1));
+	  break;
+	case UF_TAN:
+	  POP_COMPLEX("( X -- x ) TAN", c1);
+	  PUSH_COMPLEX("TAN", ctan(c1));
+	  break;
+	case UF_ACOS:
+	  POP_COMPLEX("( X -- x ) ACOS", c1);
+	  PUSH_COMPLEX("ACOS", cacos(c1));
+	  break;
+	case UF_ASIN:
+	  POP_COMPLEX("( X -- x ) ASIN", c1);
+	  PUSH_COMPLEX("ASIN", casin(c1));
+	  break;
+	case UF_ATAN:
+	  POP_COMPLEX("( X -- x ) ATAN", c1);
+	  PUSH_COMPLEX("ATAN", catan(c1));
 	  break;
 	case UF_LOG:
 	  POP_COMPLEX("( X -- x ) LOG", c1);

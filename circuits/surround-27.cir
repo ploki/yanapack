@@ -1,23 +1,6 @@
 * SURROUND based on Fostex FF165WK and SEAS 19TTF1
 
-*.include driver.cir
-.subckt driver in+ in- pd+ pd-
-******************************
-* drop: V, flow: A
-Le                 in+    0   {Le}
-Re                   0    1   {Re}
-Glmotor              1  in-   {1 Bl /}
-Rmotor_linkage     in-    g   1T
-Grmotor              2    g   {1 Bl /}
-* drop: N, flow: m/s
-Rrms                 2    3   {Rms}
-Lmms                 3    4   {Mms}
-Ccms                 4    5   {Cms}
-Tldiaphragm          5    g   {Sd}
-Rdiaphragm_linkage   g  pd-   1T
-Trdiaphragm        pd+  pd-   1
-* drop: Pa, flow: m³/s
-.ends
+.include circuits/driver.cir
 
 * amp *
 Eg 1 0 2.83
@@ -69,24 +52,25 @@ ZrT2  16 13 7.6cm² ai
 * set grid xtics mxtics ytics mytics back ls 12, ls 13
 * plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
 
-! frequency response /1m
-. F .
-. 132cm² 1 0° DIRIMP IZrW1 * 7.6cm² 1 0° DIRIMP IZrT1 * - DBSPL .
-. 132cm² 1 0° DIRIMP IZrW1 * DBSPL .
-. 7.6cm² 1 0° DIRIMP IZrT1 * DBSPL .
+!general properties
+. 132cm² TO woofer_Sd  IZrW1     TO woofer_volume_velocity
+. 7.6cm² TO tweeter_Sd IZrT1 NEG TO tweeter_volume_velocity
+. 0.25 TO distance_between_drivers
+. 1 TO distance
 
-*. F . 
-*. 132cm² 1 0° DIRIMP IZrW1 *
-*. 7.6cm² 1 0° DIRIMP IZrT1 * - DBSPL .
-*. 132cm² 1 30° DIRIMP IZrW1 *
-*. 7.6cm² 1 30° DIRIMP IZrT1 * - DBSPL .
-*. 132cm² 1 60° DIRIMP IZrW1 *
-*. 7.6cm² 1 60° DIRIMP IZrT1 * - DBSPL .
+!! frequency response /1m
+*.include circuits/frequency_response_2way.fth
+
+!! vertical directivity
+*. -10° TO vertical_angle
+*.include circuits/vertical_directivity_2way.fth
+
+!! horizontal directivity
+*.include circuits/horizontal_directivity_2way.fth
 
 
-! cone disp
-*. F .
-*. IZrW1 ABS 2 SQRT * 2 PI * F * 132cm² * / 1000 * .
+! cone disp in mm
+.include circuits/cone_displacement_2way.fth
 
 
 !phase

@@ -61,22 +61,27 @@ ZrT2  16 13 7.6cm² ai
 !! frequency response /1m
 *.include circuits/frequency_response_2way.fth
 
+!! horizontal directivity
+.include circuits/horizontal_directivity_2way.fth
+
 !! vertical directivity
 *. -10° TO vertical_angle
 *.include circuits/vertical_directivity_2way.fth
 
-!! horizontal directivity
-*.include circuits/horizontal_directivity_2way.fth
-
-
 ! cone disp in mm
-.include circuits/cone_displacement_2way.fth
-
+*.include circuits/cone_displacement_2way.fth
 
 !phase
-*. F .
-*. IZrW1 ARG .
-*. IZrT1 ARG .
+*.include circuits/phase_2way.fth
+
+! phase delay in ms
+*.include circuits/phase_delay_2way.fth
+
+! ** group delay **
+*. >>> F IZrT1 IZrW1 <<<     TO _woofer_volume_velocity
+*.                       NEG TO _tweeter_volume_velocity
+*.                           TO _F
+*.include circuits/group_delay_2way.fth
 
 ! power dissipation in resistors
 *. F .
@@ -86,25 +91,3 @@ ZrT2  16 13 7.6cm² ai
 ! total impedance
 *. F .
 *. v1 v0 - IEg / DUP ABS . ARG DEG .
-
-! phase delay
-*. F DUP .
-*. 1 SWAP / 1000 * DUP NEG . .
-*. 
-*. IZrW1 ARG PDELAY 1000 * .
-*. IZrT1 ARG PDELAY 1000 * .
-*. IZrW1 ARG .
-
-! ** group delay **
-*. >>> F <<< F - 2 PI * * 1000 /
-*. DUP
-*! freq
-*. F DUP .
-*! -1 cycle and 1 cycle
-*. 1 SWAP / 1000 * DUP NEG . .
-*! group delay of the midbass driver
-*. >>> IZrW1 ARG <<< IZrW1 ARG ANGLE SWAP / NEG .
-*! group delay of the HF driver
-*. >>> IZrT1 ARG <<< IZrT1 ARG ANGLE SWAP / NEG .
-*! phase of the midbass driver
-*. IZrW1 ARG .

@@ -24,9 +24,16 @@ Xff165wk 3 0 7 5 driver param: { .056m TO Le 6.5 TO Re 7.227 TO Bl \
 			         0.7123 TO Rms 1.068m TO Cms 9.5m TO Mms \
 			         132cm² TO Sd }
 
-ZrW1  7 8 132cm² ai
-Box   8 9 9L
-ZrWr  9 5 132cm² ai
+ZrW1  7 aGND 132cm² ai
+ZrWr  5 8 132cm² ai
+Box   8 aGND 15.83L
+
+ZPortr 8 p1 19.63cm² ai
+Port  p1 p2 6.7cm 19.63cm² kKd
+ZPort p2 aGND 19.63cm² ai
+
+
+
 
 ** tweeter **
 
@@ -44,6 +51,7 @@ ZrT1  15 16 7.6cm² ai
 ZrT2  16 13 7.6cm² ai
 
 
+
 * set logscale x
 * set mxtics
 * set mytics
@@ -52,36 +60,17 @@ ZrT2  16 13 7.6cm² ai
 * set grid xtics mxtics ytics mytics back ls 12, ls 13
 * plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
 
-!general properties
-. 132cm² TO woofer_Sd  IZrW1     TO woofer_volume_velocity
-. 7.6cm² TO tweeter_Sd IZrT1 NEG TO tweeter_volume_velocity
-. 0.25 TO distance_between_drivers
-. 1 TO distance
-
-!! frequency response /1m
-*.include circuits/frequency_response_2way.fth
-
-!! horizontal directivity
-.include circuits/horizontal_directivity_2way.fth
-
-!! vertical directivity
-*. -5° TO vertical_angle
-*.include circuits/vertical_directivity_2way.fth
-
-! cone disp in mm
-*.include circuits/cone_displacement_2way.fth
+! frequency response /1m
+. F . 
+. 1 2 FREEAIR TO fa
+. fa IZrW1 IZPort + IZrT1 - * DBSPL .
+. fa IZrW1 IZPort + * DBSPL .
+. fa IZrT1 * DBSPL .
 
 !phase
-*.include circuits/phase_2way.fth
-
-! phase delay in ms
-*.include circuits/phase_delay_2way.fth
-
-! ** group delay **
-*. >>> F IZrT1 IZrW1 <<<     TO _woofer_volume_velocity
-*.                       NEG TO _tweeter_volume_velocity
-*.                           TO _F
-*.include circuits/group_delay_2way.fth
+*. F .
+*. IZrW1 ARG .
+*. IZrT1 ARG .
 
 ! power dissipation in resistors
 *. F .
@@ -91,3 +80,25 @@ ZrT2  16 13 7.6cm² ai
 ! total impedance
 *. F .
 *. v1 v0 - IEg / DUP ABS . ARG DEG .
+
+! phase delay
+*. F DUP .
+*. 1 SWAP / 1000 * DUP NEG . .
+*. 
+*. IZrW1 ARG PDELAY 1000 * .
+*. IZrT1 ARG PDELAY 1000 * .
+*. IZrW1 ARG .
+
+! ** group delay **
+*. >>> F <<< F - 2 PI * * 1000 /
+*. DUP
+*! freq
+*. F DUP .
+*! -1 cycle and 1 cycle
+*. 1 SWAP / 1000 * DUP NEG . .
+*! group delay of the midbass driver
+*. >>> IZrW1 IZPort + ARG <<< IZrW1 IZPort + ARG ANGLE SWAP / NEG .
+*! group delay of the HF driver
+*. >>> IZrT1 ARG <<< IZrT1 ARG ANGLE SWAP / NEG .
+*! phase of the midbass driver
+*. IZrW1 IZPort + ARG .

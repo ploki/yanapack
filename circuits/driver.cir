@@ -29,9 +29,9 @@ Trdiaphragm        pd+  pd-   1
 .ends
 
 *driver example in spice syntax
-*Xlab12 1 0 2 0 driver param: Le=1.48m Re=4.29 Bl=15 Rms=1.515 Cms=0.35m Mms=146m Sd=506.7
+*Xlab12 1 0 2 0 driver param: Le=1.48m Re=4.29 Bl=15 Rms=1.515 Cms=0.35m Mms=146m Sd=506.7cm²
 
 *driver example in yanapack syntax
 *Xlab12 1 0 2 0 driver param: { 1.48m TO Le 4.29 TO Re 15 TO Bl \
 *                               1.515 TO Rms 0.35m TO Cms 146m TO Mms \
-*                               506.7 TO Sd }
+*                               506.7cm² TO Sd }

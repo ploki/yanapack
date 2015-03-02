@@ -8,12 +8,12 @@ Eg 1 0 2.83
 ** midbass **
 
 * bsc *
-Lbsc 1 2 0.8m .22
+Lbsc 1 2 .8m .22
 Rbsc 1 2 5.6
 
 * low pass *
-Llp  2 3 .6m .21
-Clp  3 0 5.6u
+Llp  2 3 .5m .21
+Clp  3 0 12u
 
 * imp comp *
 Cnw  3 4 1.2u
@@ -31,8 +31,9 @@ ZrWr  9 5 132cm² ai
 ** tweeter **
 
 Ratt 1 10 5.6
+
 Chp 10 11 3.3u
-Lhp 11 0 .15m .09
+Lhp 11 0 .5m .21
 
 *Cnt 11 12 2.2u
 *Rnt 12 0 4.7
@@ -59,10 +60,10 @@ ZrT2  16 13 7.6cm² ai
 . 1 TO distance
 
 !! frequency response /1m
-*.include circuits/frequency_response_2way.fth
+.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-.include circuits/horizontal_directivity_2way.fth
+*.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -5° TO vertical_angle
@@ -87,6 +88,22 @@ ZrT2  16 13 7.6cm² ai
 *. F .
 *. IRbsc v1 v2 - * REAL ABS .
 *. IRnw v4 v0 - *  REAL ABS .
+*. IRatt v1 v10 - * REAL ABS .
+
+!! power dissipation in driver's R
+*. F .
+*! active power
+*. IEg v1 v0 - * REAL ABS .
+*! reactive power
+**. IEg v1 v0 - * IMAG ABS .
+*! power dissipated in midbass
+*. IRe:Xff165wk v0:Xff165wk v1:Xff165wk - * REAL ABS .
+*! power dissipated in tweeter
+*. IRe:X27tffc v0:X27tffc v1:X27tffc - * REAL ABS .
+*! power dissipated in the midbass suspension
+**. IRrms:Xff165wk v2:Xff165wk v3:Xff165wk - * REAL ABS .
+*! power dissipated in the tweeter suspension
+**. IRrms:X27tffc v2:X27tffc v3:X27tffc - * REAL ABS .
 
 ! total impedance
 *. F .

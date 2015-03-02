@@ -38,6 +38,16 @@
 #include <ctype.h>
 #include <stdbool.h>
 
+#define MSG(type, fmt,...)				\
+  do							\
+    {							\
+  fprintf(stderr, type ": " fmt "\n", ## __VA_ARGS__);	\
+    }							\
+  while (0)
+#define ERROR(fmt,...) MSG("ERROR", fmt, ## __VA_ARGS__)
+#define WARNING(fmt,...) MSG("WARNING", fmt, ## __VA_ARGS__)
+#define HINT(fmt,...) MSG("HINT", fmt, ## __VA_ARGS__)
+
 typedef enum
   {
     UF_FREEAIR, // ( r1 r2 -- c )
@@ -77,6 +87,25 @@ typedef enum
     UF_DUP,     // ( v -- v v ) dup
     UF_TO,      // ( v -- ) set a word in the heap
     UF_SWAP,    // ( v1 v2 -- v2 v1 ) swap head with head-1
+    UF_DROP,
+    UF_IF,
+    UF_ELSE,
+    UF_THEN,
+    UF_BEGIN,
+    UF_WHILE,
+    UF_REPEAT,
+    UF_UNTIL,
+    UF_AGAIN,
+    UF_LEAVE,
+    UF_DEPTH,
+    UF_LT,
+    UF_LE,
+    UF_EQ,
+    UF_NE,
+    UF_GE,
+    UF_GT,
+
+    
     UF_VALUE_REAL,
     UF_VALUE_COMPLEX,
     UF_VALUE_SIMULATION,
@@ -168,6 +197,7 @@ uforth_heap_set(uforth_heap_t *heap, const char *name, yana_complex_t value)
   uforth_token_t *token = uforth_token_new(UF_VALUE_COMPLEX, name, 0.L, value);
   yana_pair_t *pair = yana_pair_new(token->symbol, token);
   assert( NULL != pair );
+  yana_map_remove(heap->map, token->symbol);
   yana_map_set(heap->map, pair);
 }
 void
@@ -292,9 +322,9 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_DEG;
 	  else if ( 0 == strcasecmp(token, "PDELAY") )
 	    token_type = UF_PDELAY;
-	  else if ( 0 == strcasecmp(token, "<<<") || 0 == strcmp(token, "PREV"))
+	  else if ( 0 == strcasecmp(token, "<<<") || 0 == strcasecmp(token, "PREV"))
 	    token_type = UF_PREV_STEP;
-	  else if ( 0 == strcasecmp(token, ">>>") || 0 == strcmp(token, "PREV") )
+	  else if ( 0 == strcasecmp(token, ">>>") || 0 == strcasecmp(token, "PREV") )
 	    token_type = UF_NEXT_STEP;
 	  else if ( 0 == strcasecmp(token, "IMAG") )
 	    token_type = UF_IMAG;
@@ -321,6 +351,50 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_TO;
 	  else if ( 0 == strcasecmp(token, "SWAP") )
 	    token_type = UF_SWAP;
+	  else if ( 0 == strcasecmp(token, "DROP") )
+	    token_type = UF_DROP;
+	  else if ( 0 == strcasecmp(token, "IF") )
+	    token_type = UF_IF;
+	  else if ( 0 == strcasecmp(token, "ELSE") )
+	    token_type = UF_ELSE;
+	  else if ( 0 == strcasecmp(token, "THEN") )
+	    token_type = UF_THEN;
+	  else if ( 0 == strcasecmp(token, "BEGIN") )
+	    token_type = UF_BEGIN;
+	  else if ( 0 == strcasecmp(token, "WHILE") )
+	    token_type = UF_WHILE;
+	  else if ( 0 == strcasecmp(token, "REPEAT") ||
+		    0 == strcasecmp(token, "CONTINUE") )
+	    token_type = UF_REPEAT;
+	  else if ( 0 == strcasecmp(token, "UNTIL") )
+	    token_type = UF_UNTIL;
+	  else if ( 0 == strcasecmp(token, "AGAIN") )
+	    token_type = UF_AGAIN;
+	  else if ( 0 == strcasecmp(token, "LEAVE") ||
+		    0 == strcasecmp(token, "BREAK") )
+	    token_type = UF_LEAVE;
+	  else if ( 0 == strcasecmp(token, "DEPTH") )
+	    token_type = UF_DEPTH;
+	  else if ( 0 == strcmp(token, "<") ||
+		    0 == strcasecmp(token, "_LT"))
+	    token_type = UF_LT;
+	  else if ( 0 == strcmp(token, "<=") ||
+		    0 == strcasecmp(token, "_LE"))
+	    token_type = UF_LE;
+	  else if ( 0 == strcmp(token, "=") ||
+		    0 == strcmp(token, "==") ||
+		    0 == strcasecmp(token, "_EQ"))
+	    token_type = UF_EQ;
+	  else if ( 0 == strcmp(token, "<>") ||
+		    0 == strcmp(token, "!=") ||
+		    0 == strcasecmp(token, "_NE"))
+	    token_type = UF_NE;
+	  else if ( 0 == strcmp(token, ">=") ||
+		    0 == strcasecmp(token, "_GE"))
+	    token_type = UF_GE;
+	  else if ( 0 == strcmp(token, ">") ||
+		    0 == strcasecmp(token, "_GT"))
+	    token_type = UF_GT;
 	  else
 	    {
 	      char *endptr;
@@ -366,7 +440,7 @@ pop_real(uforth_context_t *uf_ctx, yana_real_t *rp)
   yana_complex_t c;
   if ( uf_ctx->stack_pos <= 0 )
     {
-      fprintf(stderr, "ERROR: stack underflow\n");
+      ERROR("stack underflow");
       return FAILURE;
     }
   
@@ -379,13 +453,13 @@ pop_real(uforth_context_t *uf_ctx, yana_real_t *rp)
       c = uf_ctx->stack[pos].c;
       if ( fabs(cimag(c)) > 0.000001 )
 	{
-	  fprintf(stderr, "ERROR: stack element is complex, real was expected\n");
+	  ERROR("stack element is complex, real was expected");
 	  return FAILURE;
 	}
       *rp = creal(c);
       break;
     default:
-      fprintf(stderr, "ERROR: unexpected type in stack, real was expected\n");
+      ERROR("unexpected type in stack, real was expected");
       return FAILURE;
     }
   uf_ctx->stack_pos = pos;
@@ -397,7 +471,7 @@ pop_complex(uforth_context_t *uf_ctx, yana_complex_t *cp)
   int pos = uf_ctx->stack_pos-1;
   if ( uf_ctx->stack_pos <= 0 )
     {
-      fprintf(stderr, "ERROR: stack underflow\n");
+      ERROR("stack underflow");
       return FAILURE;
     }
   
@@ -410,7 +484,7 @@ pop_complex(uforth_context_t *uf_ctx, yana_complex_t *cp)
       *cp = uf_ctx->stack[pos].c;
       break;
     default:
-      fprintf(stderr, "ERROR: unexpected type in stack, real was expected\n");
+      ERROR("unexpected type in stack, real was expected");
       return FAILURE;
     }
   uf_ctx->stack_pos = pos;
@@ -423,7 +497,7 @@ push_real(uforth_context_t *uf_ctx, yana_real_t r)
   int pos = uf_ctx->stack_pos;
   if ( pos+1 >= uf_ctx->stack_size )
     {
-      fprintf(stderr, "ERROR: stack overflow\n");
+      ERROR("stack overflow");
       return FAILURE;
     }
   uf_ctx->stack[pos].type = UF_VALUE_REAL;
@@ -439,7 +513,7 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
   int pos = uf_ctx->stack_pos;
   if ( pos+1 >= uf_ctx->stack_size )
     {
-      fprintf(stderr, "ERROR: stack overflow\n");
+      ERROR("stack overflow");
       return FAILURE;
     }
   uf_ctx->stack[pos].type = UF_VALUE_COMPLEX;
@@ -454,7 +528,7 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
     status = pop_real(uf_ctx, &(_var_));				\
     if ( SUCCESS != status )						\
       {									\
-	fprintf(stderr, "ERROR: "_op_" expects a real value\n");	\
+	ERROR(_op_" expects a real value");				\
 	goto loop_exit;							\
       }									\
   } while (0)
@@ -463,7 +537,7 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
     status = pop_complex(uf_ctx, &(_var_));				\
     if ( SUCCESS != status )						\
       {									\
-	fprintf(stderr, "ERROR: "_op_" expects a complex value\n");	\
+	ERROR(_op_" expects a complex value");				\
 	goto loop_exit;							\
       }									\
   } while (0)
@@ -473,7 +547,7 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
     status = push_real(uf_ctx, (_val_));				\
     if ( SUCCESS != status )						\
       {									\
-	fprintf(stderr, "ERROR: on "_op_ "\n");				\
+	ERROR("on "_op_);						\
 	goto loop_exit;							\
       }									\
   } while (0)
@@ -483,7 +557,7 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
     status = push_complex(uf_ctx, (_val_));				\
     if ( SUCCESS != status )						\
       {									\
-	fprintf(stderr, "ERROR: on "_op_ "\n");				\
+	ERROR("on "_op_);						\
 	goto loop_exit;							\
       }									\
   } while (0)
@@ -493,10 +567,53 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
     if ( uf_ctx->stack_pos < 1 )			\
       {							\
 	status = FAILURE;				\
-	fprintf(stderr, "ERROR: stack underflow\n");	\
+	ERROR("stack underflow");			\
 	goto loop_exit;					\
       }							\
     (_var_)=uf_ctx->stack[uf_ctx->stack_pos-1].type;	\
+  } while (0)
+
+#define L_PUSH(tok)						\
+  do {								\
+    if ( l_stack_pos > sizeof(l_stack)/sizeof(*l_stack) )	\
+      {								\
+	ERROR("loop stack overflow");				\
+	status = FAILURE;					\
+	goto loop_exit;						\
+      }								\
+    l_stack[l_stack_pos++]=tok;					\
+  } while (0)
+#define L_POP(tok)						\
+  do {								\
+    if ( l_stack_pos < 1 )					\
+      {								\
+	ERROR("loop stack underflow");				\
+	status = FAILURE;					\
+	goto loop_exit;						\
+      }								\
+    tok=l_stack[--l_stack_pos];					\
+  } while (0)
+
+#define L_DROP()						\
+  do {								\
+    if ( l_stack_pos < 1 )					\
+      {								\
+	ERROR("loop stack underflow");				\
+	status = FAILURE;					\
+	goto loop_exit;						\
+      }								\
+    --l_stack_pos;						\
+  } while (0)
+
+#define L_HEAD(tok)						\
+  do {								\
+    if ( l_stack_pos == 0 )					\
+      {								\
+	ERROR("loop stack empty");				\
+	status = FAILURE;					\
+	goto loop_exit;						\
+      }								\
+    tok = l_stack[l_stack_pos-1];				\
   } while (0)
 
 static status_t
@@ -507,6 +624,8 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 		    yana_complex_t *resultp,
 		    int i)
 {
+  uforth_token_t *l_stack[16];
+  int l_stack_pos = 0;
   status_t status = SUCCESS;
   uforth_token_t *token;
   yana_real_t r1, r2, r3;
@@ -717,13 +836,13 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  token=token->next;
 	  if ( NULL == token )
 	    {
-	      fprintf(stderr, "ERROR: TO: end of instructions stream\n");
+	      ERROR("TO: end of instructions stream");
 	      status = FAILURE;
 	      goto loop_exit;
 	    }
 	  if ( token->type != UF_VALUE_SIMULATION )
 	    {
-	      fprintf(stderr, "ERROR: TO: %s is not a valid word to be set\n", token->symbol);
+	      ERROR("TO: %s is not a valid word to be set", token->symbol);
 	      status = FAILURE;
 	      goto loop_exit;
 	    }
@@ -733,12 +852,149 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	case UF_SWAP:
 	  if ( uf_ctx->stack_pos < 2 )
 	    {
-	      fprintf(stderr, "ERROR: SWAP: Stack underflow\n");
+	      ERROR("SWAP: Stack underflow");
 	      status = FAILURE;
 	      goto loop_exit;
 	    }
 	  token_swap(&uf_ctx->stack[uf_ctx->stack_pos-1],
 		     &uf_ctx->stack[uf_ctx->stack_pos-2]);
+	  break;
+	case UF_DROP:
+	  POP_COMPLEX("(X -- ) DROP", c1);
+	  break;
+	case UF_IF:
+	  POP_COMPLEX("(X -- ) IF", c1);
+	  if ( 0. == c1 )
+	    {
+	      int depth=-1;
+	      uforth_token_t *orig_position = token;
+	      while ( ( token->type != UF_ELSE && token->type != UF_THEN ) || depth != 0 )
+		{
+		  if ( token->type == UF_IF ) ++depth;
+		  if ( token->type == UF_THEN ) --depth;
+		  token = token->next;
+		  if ( NULL == token )
+		    {
+		      ERROR("IF: no matching ELSE or THEN found");
+		      token = orig_position;
+		      status = FAILURE;
+		      goto loop_exit;
+		    }
+		}
+	    }
+	  break;
+	case UF_ELSE:
+	  {
+	    int depth=0;
+	    uforth_token_t *orig_position = token;
+	    while ( token->type != UF_THEN || depth != 0 )
+	      {
+		if ( token->type == UF_IF ) ++depth;
+		if ( token->type == UF_THEN ) --depth;
+		token = token->next;
+		if ( NULL == token )
+		  {
+		    ERROR("ELSE: no matching THEN found");
+		    token = orig_position;
+		    status = FAILURE;
+		    goto loop_exit;
+		  }
+	      }
+	  }
+	  break;
+	case UF_THEN:
+	  //noop
+	  break;
+	case UF_BEGIN:
+	  L_PUSH(token);
+	  break;
+	case UF_WHILE:
+	  POP_COMPLEX("(X -- ) WHILE", c1);
+	  if ( 0. == c1 )
+	    {
+	      L_DROP();
+	      int depth=0;
+	      uforth_token_t *orig_position = token;
+	      while ( token->type != UF_REPEAT || 0 != depth)
+		{
+		  if ( token->type == UF_BEGIN ) ++depth;
+		  if ( token->type == UF_UNTIL ) --depth;
+		  if ( token->type == UF_REPEAT ) --depth;
+		  if ( token->type == UF_AGAIN ) --depth;
+		  token=token->next;
+		  if ( NULL == token )
+		    {
+		      ERROR("WHILE: no matching REPEAT found");
+		      token = orig_position;
+		      status = FAILURE;
+		      goto loop_exit;
+		    }
+		}
+	    }
+	  break;
+	case UF_REPEAT:
+	  L_HEAD(token);
+	  break;
+	case UF_UNTIL:
+	  POP_COMPLEX("(X -- ) UNTIL", c1);
+	  if ( 0. == c1 )
+	    L_HEAD(token);
+	  else
+	    L_DROP();
+	  break;
+	case UF_AGAIN:
+	    L_HEAD(token);
+	  break;
+	case UF_LEAVE:
+	  {
+	    int depth = 0;
+	    L_DROP();
+	    uforth_token_t *orig_position = token;
+	    while ( ! ( ( token->type == UF_UNTIL ||
+			  token->type == UF_REPEAT ||
+			  token->type == UF_AGAIN ) && depth == 0 ) )
+	      {
+		if ( token->type == UF_BEGIN ) ++depth;
+		if ( token->type == UF_UNTIL ) --depth;
+		if ( token->type == UF_REPEAT ) --depth;
+		if ( token->type == UF_AGAIN ) --depth;
+		token = token->next;
+		if ( NULL == token )
+		  {
+		    ERROR("LEAVE: no matching UNTIL|REPEAT|AGAIN found");
+		    token = orig_position;
+		    status = FAILURE;
+		    goto loop_exit;
+		  }
+	      }
+	  }
+	  break;
+	case UF_DEPTH:
+	  PUSH_REAL("DEPTH", uf_ctx->stack_pos);
+	  break;
+	case UF_LT:
+	case UF_LE:
+	case UF_EQ:
+	case UF_NE:
+	case UF_GE:
+	case UF_GT:
+	  POP_COMPLEX("(x X -- ) IF", c2);
+	  POP_COMPLEX("(X x -- ) IF", c1);
+	  if ( cimag(c1) != 0.L || cimag(c2) != 0.L )
+	    {
+	      ERROR("comparison between complex numbers");
+	      status = FAILURE;
+	      goto loop_exit;
+	    }
+	  r1=creal(c1); r2=creal(c2);
+	  PUSH_REAL("comparison",
+		    UF_LT == token->type ? ( r1<r2)
+		    : UF_LE == token->type ? (r1<=r2)
+		    : UF_EQ == token->type ? (r1==r2)
+		    : UF_NE == token->type ? (r1!=r2)
+		    : UF_GE == token->type ? (r1>=r2)
+		    : UF_GT == token->type ? (r1>r2)
+		    : 0);
 	  break;
 	case UF_VALUE_REAL:
 	  PUSH_REAL("real literal", token->r);
@@ -757,19 +1013,18 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      }
 	    else
 	      {
-		if ( ( token->symbol[0] != 'v' || !isdigit(token->symbol[1] ) ) &&
-		     ( token->symbol[0] != 'I' || isdigit(token->symbol[1] ) ) )
+		if ( token->symbol[0] != 'v'  &&  token->symbol[0] != 'I' )
 		  {
-		    fprintf(stderr, "ERROR: Unknown symbol '%s'\n", token->symbol);
+		    ERROR("Unknown symbol '%s'\n", token->symbol);
 		    if ( sc )
-		      fprintf(stderr, "HINT: dipoles start with 'I' and nodes start with 'v'\n");
+		      HINT("dipoles start with 'I' and nodes start with 'v'");
 		    status = FAILURE;
 		    goto loop_exit;
 		  }
 		sim_array = simulation_result(simulation, token->symbol+1);
 		if ( NULL == sim_array )
 		  {
-		    fprintf(stderr, "ERROR: Unknown symbol '%s'\n", token->symbol);
+		    ERROR("Unknown symbol '%s'", token->symbol);
 		    status = FAILURE;
 		    goto loop_exit;
 		  }
@@ -804,10 +1059,15 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	}
       fputs("\n", stderr);
     }
+  else if ( l_stack_pos != 0 )
+    {
+      ERROR("loop stack not empty at the end of the processing");
+      status = FAILURE;
+    }
   else if ( uf_ctx->stack_pos != 0 && NULL == resultp )
     {
       if ( !end )
-	fprintf(stderr, "WARNING: stack not empty at the end of the processing\n");
+	WARNING("stack not empty at the end of the processing");
       uf_ctx->stack_pos = 0;
     }
 
@@ -815,7 +1075,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
     {
       if ( uf_ctx->stack_pos != 1 )
 	{
-	  fprintf(stderr, "ERROR: one result was expected and stack size is %d\n",
+	  ERROR("one result was expected and stack size is %d",
 		  uf_ctx->stack_pos);
 	  status = FAILURE;
 	}
@@ -846,7 +1106,7 @@ uforth_execute(uforth_context_t *uf_ctx,
       status = uforth_execute_step(uf_ctx, sc, simulation, heap, resultp, i);
       if ( SUCCESS != status )
 	{
-	  fprintf(stderr, "ERROR: Execution failed\n");
+	  ERROR("Execution failed");
 	  return status;
 	}
     }

@@ -43,10 +43,10 @@ Box 12 aGND 20L
 .   1    TO distance
 
 !! frequency response /1m
-.include circuits/frequency_response_2way.fth
+*.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-*.include circuits/horizontal_directivity_2way.fth
+.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -10° TO vertical_angle

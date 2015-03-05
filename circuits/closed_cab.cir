@@ -1,0 +1,31 @@
+* full featured acoustic impedance model of a driver coupled closed cabinet *
+
+.subckt closed_cab rear_rad aGND
+*param Cms Mms Rms Bl Re Sd Qb Vb Ql
+Rab rear_rad int {                                             
+             1 2 PI Cms Mms * SQRT * * /         TO Fs         
+             Vb _RHO _C 2 POW * /                TO Ccab       
+	     Cms Sd 2 POW *                      TO Ccas       
+	     Ccab Ccas //                        TO Ct         
+             1 Ccas Ccab / + SQRT                TO multiplier 
+	     2 PI Fs multiplier * * *            TO W0         
+	     Ql W0 Ccab * /                      TO Ral        
+	     1 W0 Ct Qb * * /                    TO Rt
+	     
+	     Rt 
+	     }
+Box int aGND {Vb}
+Ral rear_rad aGND {Ral}
+
+*Rused_results rear_rad a 1T
+*R_Fs_   a b {Fs}
+*R_Ccab_ b c {Ccab}
+*R_Ccas_ c d {Ccas}
+*R_Ct_   d e {Ct}
+*R_mult_ e f {multiplier}
+*R_W0_   f g {W0}
+*R_Qtc_  g h {2 PI Fs Mms Re  * * * * Bl 2 POW /
+             2 PI Fs Mms * * * Rms / // multiplier *}
+*R_Ral_  h i {Ral}
+*R_Rt_   i aGND {Rt}
+.ends

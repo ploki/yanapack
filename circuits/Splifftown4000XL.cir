@@ -3,6 +3,7 @@
 *
 
 .include circuits/driver.cir
+.include circuits/closed_cab.cir
 
 Eg    1 0    2.83
 
@@ -18,7 +19,11 @@ X26W/8534G00 3 0 5 6 driver param: { .96m TO Le 5.7 TO Re 10.1 TO Bl \
 			             350cm² TO Sd }
 ZrW1  5 aGND  350cm² ai
 ZrW2  6 7     350cm² ai
-Box   7 aGND   37L
+*Box  7 aGND   37L
+XBox  7 aGND closed_cab param: { 37L TO Vb 7 TO Qb 50 TO Ql \
+                                 .96m TO Le 5.7 TO Re 10.1 TO Bl \
+		  	         0.80 TO Rms 0.95m TO Cms 50.5m TO Mms \
+			         350cm² TO Sd }
 
 
 RbT   1 8    3.25

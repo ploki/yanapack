@@ -68,6 +68,7 @@ typedef enum
     UF_ACOS,
     UF_ASIN,
     UF_ATAN,
+    UF_PAR,
     UF_ABS,     // ( c1 -- r ) modulus of c1
     UF_ARG,     // ( c1 -- r ) argument of c1
     UF_ANGLE,     // ( r1 r2 -- r ) angle difference
@@ -78,6 +79,9 @@ typedef enum
     UF_IMAG,    // ( c1 -- r ) imag part of c1
     UF_REAL,    // ( c1 -- r ) real part of c1
     UF_PI,      // ( -- r ) pi
+    UF_RHO,
+    UF_C,
+    UF_MU,
     UF_F,       // ( -- r ) current freq
     UF_S,       // ( -- r ) current step
     UF_I,       // ( -- i ) push i into the stack
@@ -312,6 +316,9 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_ATAN;
 	  else if ( 0 == strcasecmp(token, "LOG") )
 	    token_type = UF_LOG;
+	  else if ( 0 == strcmp(token, "//") ||
+		    0 == strcasecmp(token, "PAR") )
+	    token_type = UF_PAR;
 	  else if ( 0 == strcasecmp(token, "ABS") )
 	    token_type = UF_ABS;
 	  else if ( 0 == strcasecmp(token, "ARG") )
@@ -332,6 +339,12 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_REAL;
 	  else if ( 0 == strcasecmp(token, "PI") )
 	    token_type = UF_PI;
+	  else if ( 0 == strcasecmp(token, "_RHO") )
+	    token_type = UF_RHO;
+	  else if ( 0 == strcasecmp(token, "_C") )
+	    token_type = UF_C;
+	  else if ( 0 == strcasecmp(token, "_MU") )
+	    token_type = UF_MU;
 	  else if ( 0 == strcasecmp(token, "F") )
 	    token_type = UF_F;
 	  else if ( 0 == strcasecmp(token, "S") )
@@ -728,6 +741,11 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  POP_COMPLEX("( X -- x ) LOG", c1);
 	  PUSH_COMPLEX("LOG", clog10(c1));
 	  break;
+	case UF_PAR:
+	  POP_COMPLEX("( x X -- x ) PAR", c2);
+	  POP_COMPLEX("( X x -- x ) PAR", c1);
+	  PUSH_COMPLEX("PAR", (c1*c2)/(c1+c2) );
+	  break;
 	case UF_ABS:
 	  POP_COMPLEX("( X -- x ) ABS", c1);
 	  PUSH_REAL("ABS", cabs(c1));
@@ -791,6 +809,15 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	case UF_PI:
 	  PUSH_REAL("PI", M_PI);
 	  break;
+	case UF_RHO:
+	  PUSH_REAL("PI", YANA_RHO);
+	  break;
+	case UF_C:
+	  PUSH_REAL("PI", YANA_C);
+	  break;
+	case UF_MU:
+	  PUSH_REAL("PI", YANA_MU);
+	  break;
 	case UF_F:
 	  PUSH_REAL("F", f);
 	  break;
@@ -813,17 +840,12 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  if ( UF_VALUE_REAL == head_type )
 	    {
 	      POP_REAL("( X -- ) DOT", r1);
-	      fprintf(stdout, "%f\t", (double)r1);
+	      fprintf(stdout, "%1.12g\t", (double)r1);
 	    }
 	  else if ( UF_VALUE_COMPLEX == head_type )
 	    {
 	      POP_COMPLEX("( X -- ) DOT", c1);
-	      r1 = creal(c1);
-	      r2 = cimag(c1);
-	      if ( fabs(r2) < 0.000001 )
-		fprintf(stdout, "%f\t", (double)r1);
-	      else
-		fprintf(stdout, "%f%+fi\t", (double)r1, (double)r2);
+	      fprintf(stdout, "%1.12g\t", (double)cabs(c1));
 	    }
 	  printed=true;
 	  break;

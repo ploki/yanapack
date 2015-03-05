@@ -1,6 +1,7 @@
 * SURROUND based on Fostex FF165WK and SEAS 27TFFC
 
 .include circuits/driver.cir
+.include circuits/closed_cab.cir
 
 * amp *
 Eg 1 0 2.83
@@ -24,9 +25,12 @@ Xff165wk 3 0 7 5 driver param: { .056m TO Le 6.5 TO Re 7.227 TO Bl \
 			         0.7123 TO Rms 1.068m TO Cms 9.5m TO Mms \
 			         132cm² TO Sd }
 
-ZrW1  7 8 132cm² ai
-Box   8 9 9L
-ZrWr  9 5 132cm² ai
+ZrW1  7 aGND 132cm² ai
+ZrWr  5 8 132cm² ai
+XBox  8 aGND closed_cab param: { 9L TO Vb 7 TO Qb 50 TO Ql \
+                                 .056m TO Le 6.5 TO Re 7.227 TO Bl \
+				 0.7123 TO Rms 1.068m TO Cms 9.5m TO Mms \
+				 132cm² TO Sd }
 
 ** tweeter **
 
@@ -60,10 +64,10 @@ ZrT2  16 13 7.6cm² ai
 . 1 TO distance
 
 !! frequency response /1m
-.include circuits/frequency_response_2way.fth
+*.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-*.include circuits/horizontal_directivity_2way.fth
+.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -5° TO vertical_angle

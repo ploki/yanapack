@@ -264,7 +264,7 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
       status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, &result);
       if ( SUCCESS != status )
 	goto end;
-      fprintf(local, " %f ", cabs(result));
+      fprintf(local, " %1.12g ", cabs(result));
       uforth_free(uf_ctx);
     }
   fclose(local);
@@ -368,7 +368,11 @@ cirpp_internal(const char *input_const, FILE *output)
 
       char *first_word = strtok_r(saved_line, " ", &tmp2);
 
-      if ( 0 == strcasecmp(first_word, ".include") )
+      if ( NULL == first_word )
+	{
+	  fprintf(output, "\n");
+	}
+      else if ( 0 == strcasecmp(first_word, ".include") )
 	{
 	}
       else if ( 0 == strcasecmp(first_word, ".subckt") )
@@ -400,6 +404,7 @@ cirpp_internal(const char *input_const, FILE *output)
 	      goto end;
 	    }
 	  subckt_ends(subckt_heap, sub, &output);
+	  sub = NULL;
 	}
       else if ( first_word[0] == 'x' || first_word[0] == 'X' )
 	{

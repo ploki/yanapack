@@ -5,10 +5,11 @@
 
 .subckt low_pass in out com
 * bsc *
-Lbsc in 0 .8m .22
-Rbsc in 0 5.6
+Lbsc1 in 0 0.8m .22
+Lbsc2 0  1 0.5m .21
+Rbsc in 1 10
 * filter *
-Llp  0 out .5m .21
+Llp  1 out .5m .21
 Clp  out com 12u
 * imp comp *
 Cnw  out 2 1.2u
@@ -17,8 +18,8 @@ Rnw  2 com 6.8
 
 .subckt high_pass in out com
 Ratt in 0 5.6
-Chp 0 out 3.3u
-Lhp out com .5m .21
+Chp 0 out 2.7u
+Lhp out com .3m .13
 *Cnt out 1 2.2u
 *Rnt 1 com 4.7
 .ends
@@ -64,10 +65,10 @@ Xtweeter 0 4 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
 . 1 TO distance
 
 !! frequency response /1m
-.include circuits/frequency_response_2way.fth
+*.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-*.include circuits/horizontal_directivity_2way.fth
+.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -5° TO vertical_angle
@@ -100,11 +101,11 @@ Xtweeter 0 4 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
 *! active power
 *. IEg v1 v0 - * REAL ABS .
 *! reactive power
-**. IEg v1 v0 - * IMAG ABS .
+*. IEg v1 v0 - * IMAG ABS .
 *! power dissipated in midbass
-*. IRe:Xff165wk v0:Xff165wk v1:Xff165wk - * REAL ABS .
+*. IRe:Xmidbass v0:Xmidbass v1:Xmidbass - * REAL ABS .
 *! power dissipated in tweeter
-*. IRe:X27tffc v0:X27tffc v1:X27tffc - * REAL ABS .
+*. IRe:Xtweeter v0:Xtweeter v1:Xtweeter - * REAL ABS .
 *! power dissipated in the midbass suspension
 **. IRrms:Xff165wk v2:Xff165wk v3:Xff165wk - * REAL ABS .
 *! power dissipated in the tweeter suspension

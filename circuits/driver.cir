@@ -23,8 +23,11 @@ Rrms                 2    3   {Rms}
 Lmms                 3    4   {Mms}
 Ccms                 4    5   {Cms}
 Tldiaphragm          5    g   {Sd}
-Rdiaphragm_linkage   g  pd-   1T
-Trdiaphragm        pd+  pd-   1
+Rdiaphragm_linkage   g    r   1T
+Trdiaphragm          f    r   1
+Zfront               f  pd+   {Sd} ai
+Zrear                r  pd-   {Sd} ai
+
 * drop: Pa, flow: m³/s
 .ends
 

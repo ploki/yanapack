@@ -4,12 +4,9 @@
 
 Eg    1 0    2.83
 
-XD2008/8511 1 0 2 3 driver param: { .08m TO Le 5.7 TO Re 2.4 TO Bl \
-		                    0.43 TO Rms 0.30m TO Cms 0.2m TO Mms \
-		                    3.8cm² TO Sd }
-ZrT1  2 aGND  3.8cm² ai
-ZrT2  3 aGND  3.8cm² ai
-
+XD2008/8511 1 0 aGND aGND driver param: { .08m TO Le 5.7 TO Re 2.4 TO Bl \
+		                          0.43 TO Rms 0.30m TO Cms 0.2m TO Mms \
+		                          3.8cm² TO Sd }
 
 * set logscale x
 * set mxtics
@@ -20,8 +17,8 @@ ZrT2  3 aGND  3.8cm² ai
 * plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
 
 !general properties
-. 350cm²   TO woofer_Sd    0 TO woofer_volume_velocity
-.   3.8cm² TO tweeter_Sd   IZrT1 TO tweeter_volume_velocity
+. 350cm²   TO woofer_Sd                      0 TO woofer_volume_velocity
+.   3.8cm² TO tweeter_Sd   IZfront:XD2008/8511 TO tweeter_volume_velocity
 .   0.25   TO distance_between_drivers
 .   1      TO distance
 
@@ -45,34 +42,12 @@ ZrT2  3 aGND  3.8cm² ai
 *.include circuits/phase_delay_2way.fth
 
 ! ** group delay **
-*. >>> F IZrT1 0<<<          TO _woofer_volume_velocity
-*.                     IZrT1 TO _tweeter_volume_velocity
-*.                           TO _F
+*. >>> F IZfront:XD2008/8511 0<<<
+*.     TO _woofer_volume_velocity
+*.     TO _tweeter_volume_velocity
+*.     TO _F
 *.include circuits/group_delay_2way.fth
 
 ! total impedance
 *. F .
 *. v1 v0 - IEg / DUP ABS . ARG DEG .
-Eg 3 0 2.83
-
-LeT   3 5 0.08m 5.7
-TlT   5 0 2.4
-
-TrT   6 0 1
-RrmsT 6 0 2.326
-CmmsT 6 0 0.2m
-LcmsT 6 0 .30m
-GlT   6 0 3.8cm²
-
-GrT   7 0 3.8cm²
-ZrT1  7 8 3.8cm² ai
-ZrT2  8 0 3.8cm² ai
-
-! impedance
-*. F . v1 v0 - IEg NEG DIV DUP ABS . ARG .
-*. F . v3 v0 - IEg NEG DIV ABS .
-
-!output
-. F .
-. 1 2 FREEAIR IZrT1 * DBSPL .
-

@@ -1,0 +1,99 @@
+* 8th order sub cabinet based on a SPH-170TC *
+* B**e has marketed such boxes *
+* +----+---+----+
+* |    |   |    |
+* |    /   |  ===
+* |   |   ===   |
+* |    \   |    |
+* |    |   |    |
+* |   =======   |
+* |    |   |    |
+* +----+---+----+
+*
+.include circuits/driver.cir
+.include circuits/closed_cab.cir
+
+* amp *
+Eg 1 0 2.8284
+
+** midbass **
+
+* low pass *
+Llp  1 3 3.5m .21
+Clp  3 0 12u
+
+* imp comp *
+Cnw  3 4 1.2u
+Rnw  4 0 6.8
+
+
+* driver *
+Xsph-170tc 3 0 9 8 driver param: { .225m TO Le 3.8 TO Re 5.2 TO Bl \
+			           1.1 TO Rms 1.38m TO Cms 16m TO Mms \
+			           127cm² TO Sd }
+
+XBoxr  8 aGND closed_cab param: { 20L TO Vb 50 TO Qb 7 TO Ql \
+                                  .225m TO Le 3.8 TO Re 5.2 TO Bl \
+			          1.1 TO Rms 1.38m TO Cms 16m TO Mms \
+			          127cm² TO Sd }
+
+XBoxm  9 aGND closed_cab param: { 10L TO Vb 50 TO Qb 7 TO Ql \
+                                  .225m TO Le 3.8 TO Re 5.2 TO Bl \
+			          1.1 TO Rms 1.38m TO Cms 16m TO Mms \
+			          127cm² TO Sd }
+
+Boxf 10 aGND 20L
+
+
+*Set Vb to 15.83 to use the port
+Portrf  8 10 15cm 19.63cm² kkr
+Portmf  9 10 4cm 19.63cm² kkr
+
+Portf 10 aGND 6cm 19.63cm² kKr
+
+* set logscale x
+* set mxtics
+* set mytics
+* set style line 12 lc rgb '#ddccdd' lt 1 lw 1.5
+* set style line 13 lc rgb '#ddccdd' lt 1 lw 0.5
+* set grid xtics mxtics ytics mytics back ls 12, ls 13
+* plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
+
+!general properties
+. 132cm² TO woofer_Sd  IPortf     TO woofer_volume_velocity
+. 7.6cm² TO tweeter_Sd 0 TO tweeter_volume_velocity
+. 0.25 TO distance_between_drivers
+. 1 TO distance
+
+!! frequency response /1m
+.include circuits/frequency_response_2way.fth
+
+! cone disp in mm
+*.include circuits/cone_displacement_2way.fth
+
+!phase
+*.include circuits/phase_2way.fth
+
+! phase delay in ms
+*.include circuits/phase_delay_2way.fth
+
+! ** group delay **
+*. >>> F 0 IPortf <<<     TO _woofer_volume_velocity
+*.                       NEG TO _tweeter_volume_velocity
+*.                           TO _F
+*.include circuits/group_delay_2way.fth
+
+!! power dissipation in driver's R
+*. F .
+*! active power
+*. IEg v1 v0 - * REAL ABS .
+*! reactive power
+*. IEg v1 v0 - * IMAG ABS .
+*! power dissipated in midbass
+*. IRe:Xsph-170tc v0:Xsph-170tc v1:Xsph-170tc - * REAL ABS .
+*! power dissipated in the midbass suspension
+*. IRrms:Xsph-170tc v2:Xsph-170tc v3:Xsph-170tc - * REAL ABS .
+
+! total impedance
+*. F .
+*. v1 v0 - IEg / DUP ABS . ARG DEG .

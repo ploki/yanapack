@@ -13,11 +13,11 @@ COMMON_CFLAGS = `gsl-config --cflags` -fPIC -Wall -Werror -I.
 RELEASE_CFLAGS = $(COMMON_CFLAGS) -O9 -mfpmath=sse  -fopenmp
 DEBUG_CFLAGS = $(COMMON_CFLAGS) -O0 -ggdb3 
 
-.PHONY: all debug
+.PHONY: all debug install
 
-all: CFLAGS = $(RELEASE_CFLAGS)
+install all: CFLAGS = $(RELEASE_CFLAGS)
 debug:  CFLAGS = $(DEBUG_CFLAGS)
-all:binaries
+all: binaries
 debug: binaries
 
 # -fopenmp
@@ -35,3 +35,7 @@ yanapack: $(OFILES) main.o
 
 clean:
 	rm -f libyanapack.so yanapack_test yanapack $(OFILES) test.o main.o
+
+install: yanapack
+	install -d $(DESTDIR)/usr/bin
+	install yanapack $(DESTDIR)/usr/bin

@@ -5,11 +5,9 @@
 
 .subckt low_pass in out com
 * filter *
-Llp1 in     0  0.8m .22
-Llp2  0     1  0.5m .21
-Llp3  1   out  0.5m .21
-Clp1  out com  12u
-Clp2  out com  3.3u
+Llp1 in  out  2.2m 0.62
+Clp1 out com  12u
+Clp2 out com  12u
 * imp comp *
 Cnw  out 2 1.2u
 Rnw  2 com 6.8
@@ -18,11 +16,9 @@ Rnw  2 com 6.8
 .subckt high_pass in out com
 Ratt1 in 1 5.6
 Ratt2 in 1 10
-Chp1 in 1 2.7u
-Chp2 1 out 4.7u
-Lhp out com .3m .13
-*Cnt out 1 2.2u
-*Rnt 1 com 4.7
+Chp1 1 2 6.8u
+Lhp 2 com .2m .10
+Chp2  2 out 22u
 .ends
 
 * amp *
@@ -40,15 +36,15 @@ XBox  3 aGND closed_cab param: { 9L TO Vb 50 TO Qb 7 TO Ql \
 				 0.7123 TO Rms 1.068m TO Cms 9.5m TO Mms \
 				 132cm² TO Sd }
 *Set Vb to 15.83 to use the port
-*Port  8 aGND 6.7cm 19.63cm² kKr
+*Port  3 aGND 6.7cm 19.63cm² kKr
 
 
 ** tweeter **
 Xhigh_pass 1 4 0 high_pass
 * SEAS 27TFFC
 Xtweeter 4 0 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
-                                      2 TO Rms .23m TO Cms .25m TO Mms \
-	                              7.6cm² TO Sd }
+                                       2 TO Rms .23m TO Cms .25m TO Mms \
+	                               7.6cm² TO Sd }
 
 
 * set logscale x
@@ -66,10 +62,10 @@ Xtweeter 4 0 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
 . 1 TO distance
 
 !! frequency response /1m
-.include circuits/frequency_response_2way.fth
+*.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-*.include circuits/horizontal_directivity_2way.fth
+.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -5° TO vertical_angle
@@ -93,9 +89,9 @@ Xtweeter 4 0 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
 
 ! power dissipation in resistors
 *. F .
-*. IRbsc v1 v2 - * REAL ABS .
-*. IRnw v4 v0 - *  REAL ABS .
-*. IRatt v1 v10 - * REAL ABS .
+*. IRatt1:Xhigh_pass 1 v1:Xhigh_pass - * REAL ABS .
+*. IRnw:Xlow_pass v2:Xlow_pass 0 - *  REAL ABS .
+
 
 !! power dissipation in driver's R
 *. F .

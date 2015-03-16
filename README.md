@@ -46,11 +46,35 @@ It is distributed under the 3-clause BSD License
 Installation
 ------------
 
+### Prerequisites
+
 GSL is needer in order to build yanapack. You can grab it from ftp.gnu.org/pub/gnu/gsl
 or install it using your distribution channel
 
 ``` bash
 # apt-get install libgsl0-dev
+```
+
+### Build the software
+
+
+``` bash
+$ cd yanapack
+$ make
+$ sudo make install
+$ yanapack -h
+Yanapack: Yet Another Nodal Analysis PACKage
+usage: yanapack -h -n ARG -c ARG -s -f ARG -t ARG -p ARG -F ARG -T ARG
+	-h	--help
+	-n	--netlist	ARG
+	-c	--command	ARG
+	-s	--interactive
+	-f	--from-frequency	ARG
+	-t	--to-frequency	ARG
+	-p	--steps-per-decade	ARG
+	-F	--from-log-frequency	ARG
+	-T	--to-log-frequency	ARG
+
 ```
 
 Simulation example

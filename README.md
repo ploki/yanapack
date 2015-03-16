@@ -13,7 +13,7 @@ This library will be used in a improved version of the loudspeaker graphing calc
 
 The science behind this simulation software comes from:
  - Acoustics: Sound Fields and Transducers (Leo L. Beranek, Tim Mellow) ISBN-13: 978-0123914217
- - Electroacoustic modelling of the subwoofer enclosures (Janne Ahonen, Linearteam) http://koti.kapsi.fi/jahonen/
+ - Electroacoustic modelling of the subwoofer enclosures (Janne Ahonen, Linearteam) http://koti.kapsi.fi/jahonen/Audio/Papers/enclosuremodelling.pdf
 
 
 ### Elements simulated

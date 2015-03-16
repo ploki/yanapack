@@ -4,21 +4,22 @@
 .include circuits/closed_cab.cir
 
 .subckt low_pass in out com
-* bsc *
-Lbsc1 in 0 0.8m .22
-Lbsc2 0  1 0.5m .21
-Rbsc in 1 10
 * filter *
-Llp  1 out .5m .21
-Clp  out com 12u
+Llp1 in     0  0.8m .22
+Llp2  0     1  0.5m .21
+Llp3  1   out  0.5m .21
+Clp1  out com  12u
+Clp2  out com  3.3u
 * imp comp *
 Cnw  out 2 1.2u
 Rnw  2 com 6.8
 .ends
 
 .subckt high_pass in out com
-Ratt in 0 5.6
-Chp 0 out 2.7u
+Ratt1 in 1 5.6
+Ratt2 in 1 10
+Chp1 in 1 2.7u
+Chp2 1 out 4.7u
 Lhp out com .3m .13
 *Cnt out 1 2.2u
 *Rnt 1 com 4.7
@@ -44,8 +45,8 @@ XBox  3 aGND closed_cab param: { 9L TO Vb 50 TO Qb 7 TO Ql \
 
 ** tweeter **
 Xhigh_pass 1 4 0 high_pass
-* SEAS 27TFFC reversed polarity
-Xtweeter 0 4 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
+* SEAS 27TFFC
+Xtweeter 4 0 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
                                       2 TO Rms .23m TO Cms .25m TO Mms \
 	                              7.6cm² TO Sd }
 
@@ -65,10 +66,10 @@ Xtweeter 0 4 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
 . 1 TO distance
 
 !! frequency response /1m
-*.include circuits/frequency_response_2way.fth
+.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-.include circuits/horizontal_directivity_2way.fth
+*.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -5° TO vertical_angle

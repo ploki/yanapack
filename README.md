@@ -183,7 +183,6 @@ Vxyz x y v
 ```
 Ixyz x y i
 ```
- - E and V are possible prefix for tension sources
  - xyz is the current source's name
  - x and y are the interconnection nodes
  - i is the electric current crossing the dipole and is constant at all frequencies

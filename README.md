@@ -260,7 +260,7 @@ The embedded Forth-like interpreter is used in different ways inside the circuit
  - To push values inside the custom sub circuit being instanciated
  - To display simulation results from an interactive session. In this case lines must not start with a dot.
 
-#### Standard word with 2 inputs and 1 output ( v2 v1 -- r )
+#### Arithmetic words
  - __MUL__: 2 3 MUL . => 6
  - __*__: MUL alias 
  - __DIV__: 2 3 DIV . => .6667
@@ -270,8 +270,6 @@ The embedded Forth-like interpreter is used in different ways inside the circuit
  - __SUB__: 2 3 SUB . => -1
  - __-__: SUB ALIAS
  - __POW__: 2 3 POW . => 8
-
-#### ( v -- r )
  - __NEG__: 3 NEG . => -3
  - __EXP__: 2 EXP . => 7.38905 (e^2)
  - __e__: EXP alias
@@ -289,14 +287,14 @@ The embedded Forth-like interpreter is used in different ways inside the circuit
  - __IMAG__: -1 IMAG . I IMAG . => 0 1
  - __REAL__: -1 REAL . I REAL . => -1 0
 
-#### Stack manipulation
+#### Stack manipulation words
  - __DROP__: drop the element on the top of the stack
  - __DUP__: duplicate the element on the top of the stack
  - __SWAP__: swap the element on the top of the stack with the next one
  - __DEPTH__: push on the stack the number of elements in the stack
  - __TO__: pop a value from the stack and assign the value to the word following TO
 
-#### Comparison
+#### Comparison words
  - __\_LT__: push a non zero value if NOS < TOS
  - __&lt;__: \_LT alias
  - __\_LE__: push a non zero value if NOS <= TOS
@@ -312,7 +310,7 @@ The embedded Forth-like interpreter is used in different ways inside the circuit
  - __\_GT__: push a non zero value if NOS > TOS
  - __&gt;__: \_GT alias
 
-#### Control
+#### Control words
  - __DOT__: pop an element from the stack and output its magnitude
  - __.__: DOT alias
  - __IF__: jump to the word following the next ELSE word if popped value is 0
@@ -326,14 +324,14 @@ The embedded Forth-like interpreter is used in different ways inside the circuit
  - __LEAVE__: jump to the word following the next REPEAT/UNTIL/AGAIN
  - __BREAK__: LEAVE alias
 
-#### Constants ( -- r )
+#### Mathematical and physics constant words
  - __PI__: push the value of PI
  - __\_RHO__: push the value of the density of the ambiant air
  - __\_C__: push the value of the speed of sound
  - __\_MU__: push the value of the ambiant air viscosity
  - __I__: push the value of the square root of -1
 
-#### Special keywords
+#### Special words
  - __F__: push the current simulation frequency
  - __S__: push the current simulation step
  - __DB__: pop an amplitude and push its dB value (it means it's 20log10(x))

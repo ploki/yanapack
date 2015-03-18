@@ -260,6 +260,12 @@ The embedded Forth-like interpreter is used in different ways inside the circuit
  - To push values inside the custom sub circuit being instanciated
  - To display simulation results from an interactive session. In this case lines must not start with a dot.
 
+#### Data type
+
+There is only one data type, complex numbers.
+
+The DOT word output the magnitude of the complex number which is on the top of the stack.
+
 #### Arithmetic words
  - __MUL__: 2 3 MUL . => 6
  - __*__: MUL alias 

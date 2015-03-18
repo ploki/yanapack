@@ -394,6 +394,9 @@ status_t dipole_new(simulation_context_t *sc,
 yana_real_t
 dipole_parse_magnitude_ext(const char *str, char **tmpp)
 {
+#define INCH (25.4e-3)
+#define FOOT (12*INCH)
+#define YARD (3*FOOT)
   char *tmp;
   yana_real_t res;
   size_t len = 0;
@@ -436,6 +439,14 @@ dipole_parse_magnitude_ext(const char *str, char **tmpp)
     return res / 100.;
   else if ( 0 == strcmp(tmp, "dm") )
     return res / 10.;
+  else if ( 0 == strcmp(tmp, "\"") ||
+	    0 == strcmp(tmp, "in" ) )
+    return res * INCH;
+  else if ( 0 == strcmp(tmp, "'") ||
+	    0 == strcmp(tmp, "ft") )
+    return res * FOOT;
+  else if ( 0 == strcmp(tmp, "yd") )
+    return res * YARD;
 
   // surface
   else if ( 0 == strcmp(tmp, "mm^2") || 0 == strcmp(tmp, "mm²") )
@@ -444,10 +455,28 @@ dipole_parse_magnitude_ext(const char *str, char **tmpp)
     return res / ( 100. * 100. );
   else if ( 0 == strcmp(tmp, "dm^2") || 0 == strcmp(tmp, "dm²") )
     return res / ( 10. * 10. );
+  else if ( 0 == strcmp(tmp, "in^2" ) || 0 == strcmp(tmp, "in²") ||
+	    0 == strcmp(tmp, "sq.in") )
+    return res * INCH * INCH;
+  else if ( 0 == strcmp(tmp, "ft^2" ) || 0 == strcmp(tmp, "ft²") ||
+	    0 == strcmp(tmp, "sq.ft") )
+    return res * FOOT * FOOT;
+  else if ( 0 == strcmp(tmp, "yd^2") || 0 == strcmp(tmp, "yd²") ||
+	    0 == strcmp(tmp, "sq.yd") )
+    return res * YARD * YARD;
 
   // volume
   else if ( 0 == strcmp(tmp, "L") )
     return res * 1e-3;
+  else if ( 0 == strcmp(tmp, "in^3" ) || 0 == strcmp(tmp, "in³") ||
+	    0 == strcmp(tmp, "cu.in") )
+    return res * INCH * INCH * INCH;
+  else if ( 0 == strcmp(tmp, "ft^3" ) || 0 == strcmp(tmp, "ft³") ||
+	    0 == strcmp(tmp, "cu.ft") )
+    return res * FOOT * FOOT * FOOT;
+  else if ( 0 == strcmp(tmp, "yd^3") || 0 == strcmp(tmp, "yd³") ||
+	    0 == strcmp(tmp, "cu.yd") )
+    return res * YARD * YARD * YARD;
 
   // angle
   else if ( 0 == strcmp(tmp, "°") || 0 == strcasecmp(tmp, "deg") )

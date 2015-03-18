@@ -252,9 +252,155 @@ Bxyz x y volume
 #### Free air impedance
 Completely useless, it pollutes the circuit impedance and hence the tension source load
  
-### The forth-like stuffs
+### The Forth-like stuffs
+
+The embedded Forth-like interpreter is used in different ways inside the circuit file or during the interactive sessions (with the -s parameter)
+ - To display simulation results. The script is embedded in the circuit file and all lines starting with ". " (a dot and a space) are considered Forth code
+ - To provide parameters to custom sub circuits. after the "param:" keyword inside a block delimited by curly brackets
+ - To push values inside the custom sub circuit being instanciated
+ - To display simulation results from an interactive session. In this case lines must not start with a dot.
+
+#### Standard word with 2 inputs and 1 output ( v2 v1 -- r )
+ - __MUL__: 2 3 MUL . => 6
+ - __*__: MUL alias 
+ - __DIV__: 2 3 DIV . => .6667
+ - __/__: DIV alias
+ - __ADD__: 2 3 ADD . => 5
+ - __+__: ADD alias
+ - __SUB__: 2 3 SUB . => -1
+ - __-__: SUB ALIAS
+ - __POW__: 2 3 POW . => 8
+
+#### ( v -- r )
+ - __NEG__: 3 NEG . => -3
+ - __EXP__: 2 EXP . => 7.38905 (e^2)
+ - __e__: EXP alias
+ - __SQRT__: 2 SQRT . => 1.4142
+ - __LN__: 2 LN . => 0.693147 (ln(2))
+ - __LOG__: 2 LOG . => 0.30103 (log10(2))
+ - __COS__: 2 COS . => 0.99939 (cos(2))
+ - __SIN__: 2 SIN . => 0.03489 (sin(2))
+ - __TAN__: 2 TAN . => 0.03492 (tan(2))
+ - __ACOS__: .707 ACOS . => 0.78555 (acos(.707))
+ - __ASIN__: .707 ASIN . => 0.78525 (asin(.707))
+ - __ATAN__: .707 ATAN . => 0.61541 (atan(.707))
+ - __ABS__: -1 ABS . I ABS . => 1 1 (abs(-1), abs(i))
+ - __ARG__: -1 ARG . I ARG . => 3.14159 1.5708 (arg(-1), arg(i))
+ - __IMAG__: -1 IMAG . I IMAG . => 0 1
+ - __REAL__: -1 REAL . I REAL . => -1 0
+
+#### Stack manipulation
+ - __DROP__: drop the element on the top of the stack
+ - __DUP__: duplicate the element on the top of the stack
+ - __SWAP__: swap the element on the top of the stack with the next one
+ - __DEPTH__: push on the stack the number of elements in the stack
+ - __TO__: pop a value from the stack and assign the value to the word following TO
+
+#### Comparison
+ - __\_LT__: push a non zero value if NOS < TOS
+ - __&lt;__: \_LT alias
+ - __\_LE__: push a non zero value if NOS <= TOS
+ - __&lt;=__: \_LE alias
+ - __\_EQ__: push a non zero value if NOS equals TOS
+ - __=__: \_EQ alias
+ - __==__: \_EQ alias
+ - __\_NE__: push a non zero value if NOS is not equel to TOS
+ - __&lt;&gt;__: \_NE alias
+ - __!=__: \_NE alias
+ - __\_GE__: push a non zero value if NOS >= TOS
+ - __&gt;=__: \_GE alias
+ - __\_GT__: push a non zero value if NOS > TOS
+ - __&gt;__: \_GT alias
+
+#### Control
+ - __DOT__: pop an element from the stack and output its magnitude
+ - __.__: DOT alias
+ - __IF__: jump to the word following the next ELSE word if popped value is 0
+ - __ELSE__: jump to the word following the next THEN
+ - __THEN__: do nothing
+ - __BEGIN__: do nothing
+ - __WHILE__: jump to the word following the next REPEAT word if popped value is 0
+ - __REPEAT__: jump to the last BEGIN word
+ - __UNTIL__: jump to the last begin if popped value is 0
+ - __AGAIN__: jump to the last begin
+ - __LEAVE__: jump to the word following the next REPEAT/UNTIL/AGAIN
+ - __BREAK__: LEAVE alias
+
+#### Constants ( -- r )
+ - __PI__: push the value of PI
+ - __\_RHO__: push the value of the density of the ambiant air
+ - __\_C__: push the value of the speed of sound
+ - __\_MU__: push the value of the ambiant air viscosity
+ - __I__: push the value of the square root of -1
+
+#### Special keywords
+ - __F__: push the current simulation frequency
+ - __S__: push the current simulation step
+ - __DB__: pop an amplitude and push its dB value (it means it's 20log10(x))
+ - __DBSPL__: pop a pression in Pa and push its dB SPL value (20log10(x/(20e-6)))
+ - __DEG__: pop an angle in radian push its value in degrees 
+ - __PDELAY__: pop a complex value and push the phase delay in regard to its frequency
+ - __PREV_STEP__: switch to the last simulation step
+ - __&lt;&lt;&lt;__: PREV_STEP alias
+ - __NEXT_STEP__: switch to the next simulation step
+ - __&gt;&gt;&gt;__: NEXT_STEP alias
+ - __PAR__: pop v2 and v1 and push the result of (v1*v2)/(v1+v2)
+ - __//__: PAR alias
+ - __ANGLE__: pop 2 phases in radian and push the value of the angle between the 2 phases
+ - __FREEAIR__: compute the free air impedance for a given listening distance and a solid angle. Pop the solid angle divided by PI in which the radiation happens and then pop the distance to the listener. Finaly, push the computation in the stack
+ - __DIRIMP__: compute the free air impedance including the directivity pattern of the circular pistonic driver. Pop the angle, Pop the distance and pop the radiation surface. Finaly, push the computation in the stack
 
 ### Number formats
+
+In both Forth context or in the netlist definition, only real floating point numbers are permitted. The numbers are represented as usual and the following are all valid figures
+ - 1
+ - 1.2
+ - .56
+ - .68e-3
+
+In addition, there are several suffixes to perform basic conversion or add unit prefixes from the metric system.
+ - __f__: * 10^-15
+ - __p__: * 10^-12
+ - __n__: * 10^-9
+ - __u__, __µ__: * 10^-6
+ - __m__: * 10^-3
+ - __c__: * 10^-2
+ - __d__: * 10^-1
+ - __k__: * 10^3
+ - __M__, __meg__: * 10^6
+ - __G__, 10^9
+ - __T__, 10^12
+
+Length suffixes
+ - __mm__: / 1000
+ - __cm__: / 100
+ - __dm__: / 10
+ - __in__, __"__: * 0.0254
+ - __ft__, __'__: * 0.3048
+ - __yd__: * 0.9144
+
+Surface suffixes
+ - __mm^2__, __mm²__: / 1000000
+ - __cm^2__, __cm²__: / 10000
+ - __dm^2__, __dm²__: / 100
+ - __in^2__, __in²__, __sq.in__: * 0.00064516
+ - __ft^2__, __ft²__, __sq.ft__: * 0.092903
+ - __yd^2__, __yd²__, __sq.yd__: * 0.836127
+
+Volume suffixes
+ - __L__: / 1000
+ - __in^3__, __in³__, __cu.in__: * 1.63871e-5
+ - __ft^3__, __ft³__, __cu.ft__: * 0.0283168
+ - __yd^3__, __yd³__, __cu.yd__: * 0.764555
+
+Angle suffixes
+ - __deg__, __°__: * PI/180
+
+### Preprocessor
+
+#### .include
+#### .subckt/.ends
+
 
 Contributing
 ------------

@@ -50,8 +50,6 @@ dipole_type_t dipole_name_to_type(const char *name)
       return YANA_TRANSFORMER;
     case 'g': case 'G':
       return YANA_GYRATOR;
-    case 'i': case 'I':
-      return YANA_CURRENT_SOURCE;
     case 'e': case 'E': case 'v': case 'V':
       return YANA_TENSION_SOURCE;
     case 'z': case 'Z':
@@ -328,7 +326,6 @@ status_t dipole_init_values(dipole_t *dipole)
     {
     case YANA_RESISTOR:
     case YANA_TRANSFORMER:
-    case YANA_CURRENT_SOURCE:
     case YANA_TENSION_SOURCE:
       return dipole_init_simple(dipole);
     case YANA_GYRATOR:

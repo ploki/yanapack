@@ -180,8 +180,16 @@ Vxyz x y v
  - v is the electric potential between x and y (in than order) and is constant at all frequencies
 
 #### Current source
+Current source is not an elementary dipole type in yanapack but can be modeled with a tension source and a gyrator using a sub circuit.
 ```
-Ixyz x y i
+.subckt current_source v1 v2 current
+Eg 1 0 {current}
+Glcurrent_source 1 0 1
+Rlinkage 0 v2 1T
+Grcurrent_source v1 v2 1
+.ends
+
+Xxyz x y current_source param: {i TO current}
 ```
  - xyz is the current source's name
  - x and y are the interconnection nodes

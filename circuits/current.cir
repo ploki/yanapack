@@ -1,0 +1,13 @@
+* current source example *
+
+.subckt current_source v1 v2 current
+Eg 1 0 {current}
+Glcurrent_source 1 0 1
+Rlinkage 0 v2 1T
+Grcurrent_source v1 v2 1
+.ends
+
+XIs 1 0 current_source param: {2 TO current}
+R1 1 0 4
+
+. F . IR1 . v1 v0 - .

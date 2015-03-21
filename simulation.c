@@ -488,7 +488,6 @@ status_t simulation_ohm(simulation_t *simulation, int *current_line)
 	case YANA_GYRATOR:
 	  simulation_prepare_gyrator(simulation, dipole, current_line);
 	  break;
-	case YANA_CURRENT_SOURCE:
 	case YANA_UNKNOWN:
 	  assert(!"not implemented");
 	}
@@ -542,18 +541,6 @@ status_t simulation_kcl(simulation_t *simulation, int *current_line)
 	break;
     }
   assert (processed_nodes == vec_node_count(simulation->nodelist->nodes) - 1 );
-
-  // report all current sources
-  for ( i = 0 ; i < vec_dipole_count(simulation->nodelist->netlist->dipoles) ; ++i )
-    {
-      if ( vec_dipole(simulation->nodelist->netlist->dipoles)[i].type == YANA_CURRENT_SOURCE )
-	{
-	  asprintf(&simulation->cells[*current_line][vec_node_count(simulation->nodelist->nodes) + 1].dipole_name,"1");
-	  simulation->cells[*current_line][vec_node_count(simulation->nodelist->nodes) + 1].state = CELL_POSITIVE_UNITY;
-	  simulation_cell_set_with_dipole(simulation->nodelist->netlist->sc, &simulation->cells[*current_line][simulation->n_vars], &vec_dipole(simulation->nodelist->netlist->dipoles)[i]);
-	  ++(*current_line);
-	}
-    }
 
   return status;
 }

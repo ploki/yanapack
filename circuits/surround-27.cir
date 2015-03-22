@@ -14,8 +14,7 @@ Rnw  2 com 6.8
 .ends
 
 .subckt high_pass in out com
-Ratt1 in 1 5.6
-Ratt2 in 1 10
+Ratt in 1 5.6
 Chp1 1 2 6.8u
 Lhp 2 com .2m .10
 Chp2  2 out 22u
@@ -89,7 +88,7 @@ Xtweeter 4 0 aGND aGND driver param: { .05m TO Le 4.8 TO Re 3.5 TO Bl \
 
 ! power dissipation in resistors
 *. F .
-*. IRatt1:Xhigh_pass 1 v1:Xhigh_pass - * REAL ABS .
+*. IRatt:Xhigh_pass 1 v1:Xhigh_pass - * REAL ABS .
 *. IRnw:Xlow_pass v2:Xlow_pass 0 - *  REAL ABS .
 
 

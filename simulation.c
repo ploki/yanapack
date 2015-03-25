@@ -437,6 +437,7 @@ status_t simulation_ohm(simulation_t *simulation, int *current_line)
 	case YANA_RESISTOR:
 	case YANA_INDUCTOR:
 	case YANA_CAPACITOR:
+	case YANA_SEMI_IMPEDANCE:
 	case YANA_RADIATOR:
 	case YANA_PORT:
 	case YANA_BOX:

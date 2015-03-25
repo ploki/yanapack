@@ -52,6 +52,8 @@ dipole_type_t dipole_name_to_type(const char *name)
       return YANA_GYRATOR;
     case 'e': case 'E': case 'v': case 'V':
       return YANA_TENSION_SOURCE;
+    case 'k': case 'K':
+      return YANA_SEMI_IMPEDANCE;
     case 'z': case 'Z':
       return YANA_RADIATOR;
     case 'p': case 'P':
@@ -87,6 +89,65 @@ status_t dipole_init_simple(dipole_t *dipole)
 	++ i )
     {
       dipole->values[i] = dipole->magnitude;
+    }
+  return SUCCESS;
+}
+
+status_t dipole_init_semi(dipole_t *dipole)
+{
+  //[K]idx node1 node2 magnitude pow_of_freq [cri][ia]
+  enum {
+    semi_complex,
+    semi_real,
+    semi_imag
+  } type = semi_complex;
+  enum {
+    semi_impedance,
+    semi_admitance
+  } analogy = semi_impedance;
+  yana_real_t pow_of_freq;
+  if ( NULL == dipole->param1 )
+    {
+      fprintf(stderr, "incomplete Semi dipole\n");
+      return FAILURE;
+    }
+  pow_of_freq = dipole_parse_magnitude(dipole->param1);
+  if ( dipole->param2 )
+    {
+      switch(dipole->param2[0])
+	{
+	case 'c': type = semi_complex; break;
+	case 'r': type = semi_real; break;
+	case 'i': type = semi_imag; break;
+	default:
+	  fprintf(stderr, "bad Semi type '%c'\n", dipole->param2[0]);
+	  return FAILURE;
+	}
+      switch(dipole->param2[1])
+	{
+	case 'i': analogy = semi_impedance; break;
+	case 'a': analogy = semi_admitance; break;
+	default:
+	  fprintf(stderr, "bad Semi analogy '%c'\n", dipole->param2[1]);
+	  return FAILURE;
+	}
+    }
+  int i, s;
+  for ( i = 0, s = simulation_context_get_n_samples(dipole->sc) ;
+	i < s ;
+	++ i )
+    {
+      yana_real_t f = simulation_context_get_f(dipole->sc,i);
+      yana_real_t w = 2.L * M_PI * f;
+      yana_complex_t v = 0;
+      if ( semi_real == type || semi_complex == type )
+	v+= pow(w, pow_of_freq) * dipole->magnitude;
+      if ( semi_imag == type || semi_complex == type )
+	v+= I * pow(w, pow_of_freq) * dipole->magnitude;
+      if ( semi_impedance == analogy )
+	dipole->values[i] = v;
+      else
+	dipole->values[i] = 1./v;
     }
   return SUCCESS;
 }
@@ -328,6 +389,8 @@ status_t dipole_init_values(dipole_t *dipole)
     case YANA_TRANSFORMER:
     case YANA_TENSION_SOURCE:
       return dipole_init_simple(dipole);
+    case YANA_SEMI_IMPEDANCE:
+      return dipole_init_semi(dipole);
     case YANA_GYRATOR:
       return dipole_init_gyrator(dipole);
     case YANA_INDUCTOR:

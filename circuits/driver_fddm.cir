@@ -1,0 +1,26 @@
+
+* electro-acoustic transducer advanced/FDD model *
+
+.subckt driver_fddm in+ in- pd+ pd-
+* drop: V, flow: A
+Re'                 in+    0   {Re'}
+Leb                   0    1   {Leb}
+Le                    1    2   {Le}
+Ke                    1    2   {Ke} .5 ci
+Rss                   1    2   {Rss}
+Glmotor              2  in-   {1 Bl /}
+Rmotor_linkage     in-    g   1T
+Grmotor              3    g   {1 Bl /}
+* drop: N, flow: m/s
+Rrms                 3    4   {Rms}
+Lmms                 4    5   {Mms}
+Ccms                 5    6   {Cms}
+Kams                 5    6   {Ams} 1 ra
+Tldiaphragm          6    g   {Sd}
+Rdiaphragm_linkage   g    r   1T
+Trdiaphragm          f    r   1
+Zfront               f  pd+   {Sd} ai
+Zrear                r  pd-   {Sd} ai
+* drop: Pa, flow: m³/s
+.ends
+

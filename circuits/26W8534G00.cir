@@ -1,12 +1,18 @@
 * SCAN-SPEAK 26W/8534G00 *
 
 .include circuits/driver.cir
+.include circuits/driver_fddm.cir
 
 Eg    1 0    2.83
 
-X26W/8534G00 1 0 aGND aGND driver param: { .96m TO Le 5.7 TO Re 10.1 TO Bl \
-		  	             0.80 TO Rms 0.95m TO Cms 50.5m TO Mms \
-			             350cm² TO Sd }
+*X26W/8534G00 1 0 aGND aGND driver param: { .96m TO Le 5.7 TO Re 10.1 TO Bl \
+*		  	             0.80 TO Rms 0.95m TO Cms 50.5m TO Mms \
+*			             350cm² TO Sd }
+
+X26W/8534G00 1 0 aGND aGND driver_fddm param: { 6.08 TO Re' 0.0726m TO Leb 0.143 TO Ke 2290 TO Rss \
+                                        1.15m TO Le \
+                                        9.6 TO Bl 52.35m TO Mms 0.862m TO Cms 0.151 TO Rms \
+                                        0.0713m TO Ams 350cm² TO Sd }
 
 
 * set logscale x

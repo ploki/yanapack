@@ -258,7 +258,7 @@ Bxyz x y volume
 
 #### Semi impedance
 ```
-Kxyz x y magnitude pow_of_&omega; [cri][ia]
+Kxyz x y magnitude pow_of_w [cri][ia]
 
 * example
 Ke x y 143m .5 ci
@@ -269,17 +269,17 @@ The semi impedance dipole is useful to model specific dipoles found in frequency
  - xyz is the semi impedance name
  - x and y are the interconnection nodes of the dipole
  - magnitude is the nominal value of the dipole
- - pow_of_&omega; specifies to which power the angular velocity is elevated
+ - pow_of_w; specifies to which power the angular velocity (&omega;) is elevated
  - [cri] permit to select the form of the number to compute
-  - c gives z = magnitude * &omega;^pow_of_&omega; * ( 1 + I )
-  - r gives z = magnitude * &omega;^pow_of_&omega;
-  - i gives z = magnitude * &omega;^pow_of_&omega; * I
+  - c gives z = magnitude * &omega;^pow_of_w * ( 1 + I )
+  - r gives z = magnitude * &omega;^pow_of_w
+  - i gives z = magnitude * &omega;^pow_of_w * I
  - [ia] permit to select the analogy of the dipole
   - i sets the dipole value to z
   - a sets the dipole value to 1 / z
 
 In the examples,
- - Ke defines a semi inductance of .143 SH ( z = 143m*&radic;(&omega;)+I*143m*&radic;(&omega;) )
+ - Ke defines a semi inductance of .143 SH ( z = 143m * &radic;(&omega;) + I * 143m*&radic;(&omega;) )
  - Kams defines a conductance varying with frequency ( z = 1 / ( 2290 * &omega; ) )
 
 #### Free air impedance

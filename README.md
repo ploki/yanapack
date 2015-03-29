@@ -207,7 +207,7 @@ Trxyz w z j
  - i and j are the coefficient that represent the windings coupling
 
 #### Gyrator
-A gyrator is an hypothetical non reciprocal linear element that inverts the current-voltage characteristic of the circuit between the sides of the device. It is used to pass from impedance to admitance analogy (and the reverse of course)
+A gyrator is an hypothetical non reciprocal linear element that inverts the current-voltage characteristic of the circuit between the sides of the device. It is used to pass from impedance to admittance analogy (and the reverse of course)
 ```
 Glxyz x y i
 Grxyz w z j
@@ -228,7 +228,7 @@ Zxyz x y surface [ma][ai]
  - surface is the surface of the circular piston in square meters
  - [ma][ai] are two charaters to select the domain and the analogy
    * the first set is for the domain selection. 'm' stands for mechanical and 'a' stands for acoustic
-   * the second set is for the analogy selection. 'a' stands for admitance and 'i' stands for impedance
+   * the second set is for the analogy selection. 'a' stands for admittance and 'i' stands for impedance
 
 The Piston radiation impedance may be found in "Electroacoustic modelling of the subwoofer enclosures" chapter 2.5
  
@@ -256,6 +256,31 @@ Bxyz x y volume
  - x and y are the interconnection nodes of the box
  - volume is the volume of the box in cubic meters. The box impedance is defined as z = 1 / (s* volume/( &rho; * c^2 ) )
 
+#### Semi impedance
+```
+Kxyz x y magnitude pow_of_&omega; [cri][ia]
+
+* example
+Ke x y 143m .5 ci
+Kams w z 2290 1 ra
+```
+The semi impedance dipole is useful to model specific dipoles found in frequency-dependent damping modeling of loudspeakers (Thorborg, Knud; Tinggaard, Carsten; Agerkvist, Finn; Futtrup, Claus; "Frequency Dependence of Damping and Compliance in Loudspeaker Suspensions"; JAES Volume 58 Issue 6 pp. 472-486; June 2010)
+
+ - xyz is the semi impedance name
+ - x and y are the interconnection nodes of the dipole
+ - magnitude is the nominal value of the dipole
+ - pow_of_&omega; specifies to which power the angular velocity is elevated
+ - [cri] permit to select the form of the number to compute
+  - c gives z = magnitude * &omega;^pow_of_&omega; * ( 1 + I )
+  - r gives z = magnitude * &omega;^pow_of_&omega;
+  - i gives z = magnitude * &omega;^pow_of_&omega; * I
+ - [ia] permit to select the analogy of the dipole
+  - i sets the dipole value to z
+  - a sets the dipole value to 1 / z
+
+In the examples,
+ - Ke defines a semi inductance of .143 SH ( z = 143m*&radic;(&omega;)+I*143m*&radic;(&omega;) )
+ - Kams defines a conductance varying with frequency ( z = 1 / ( 2290 * &omega; ) )
 
 #### Free air impedance
 Completely useless, it pollutes the circuit impedance and hence the tension source load

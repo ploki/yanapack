@@ -279,7 +279,7 @@ The semi impedance dipole is useful to model specific dipoles found in frequency
   - a sets the dipole value to 1 / z
 
 In the examples,
- - Ke defines a semi inductance of .143 SH ( z = 143m * &radic;(&omega;) + I * 143m*&radic;(&omega;) )
+ - Ke defines a semi inductance of .143 SH ( z = 143m * &radic;(&omega;) + I * 143m * &radic;(&omega;) )
  - Kams defines a conductance varying with frequency ( z = 1 / ( 2290 * &omega; ) )
 
 #### Free air impedance

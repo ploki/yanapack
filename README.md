@@ -1,3 +1,5 @@
+[![Build Status](https://scan.coverity.com/projects/10036/badge.svg)](https://scan.coverity.com/projects/10036)
+
 Yanapack: Yet Another Nodal Analysis PACKage
 ============================================
 

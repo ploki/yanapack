@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -83,5 +83,6 @@ typedef double yana_real_t;
 #include "simulation.h"
 #include "solver.h"
 #include "stehfest.h"
+#include "simulation_impulse.h"
 
 #endif

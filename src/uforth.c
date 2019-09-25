@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2015, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -37,6 +37,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define MSG(type, fmt,...)				\
   do							\
@@ -82,6 +83,7 @@ typedef enum
     UF_RHO,
     UF_C,
     UF_MU,
+    UF_IMPULSE, // ( -- r ) 1 if impulse mode, 0 if frequency mode
     UF_F,       // ( -- r ) current freq
     UF_S,       // ( -- r ) current step
     UF_I,       // ( -- i ) push i into the stack
@@ -109,8 +111,8 @@ typedef enum
     UF_GE,
     UF_GT,
 
-    
-    UF_VALUE_REAL,
+    UF_VALUE_DB,      // non-lineaire
+    UF_VALUE_REAL,    //dimension physique relle
     UF_VALUE_COMPLEX,
     UF_VALUE_SIMULATION,
   } uforth_token_type_t;
@@ -118,8 +120,7 @@ typedef enum
 typedef struct uforth_token
 {
   uforth_token_type_t type;
-  yana_real_t r;
-  yana_complex_t c;
+  yana_complex_t v;
   char *symbol;
   struct uforth_token *next;
 } uforth_token_t;
@@ -133,6 +134,154 @@ struct uforth_context
   uforth_token_t stack[];
 };
 
+USE_VEC_T(yana_complex);
+typedef bool bool_t;
+USE_VEC_T(bool);
+
+typedef VEC_T(yana_complex) *line_t;
+USE_VEC_T(line);
+
+struct uforth_output
+{
+  int n_columns;
+  VEC_T(bool) *isdB;
+  line_t current_line;
+  VEC_T(line) *lines;
+};
+
+uforth_output_t *
+uforth_output_new(void)
+{
+  uforth_output_t *output;
+  output = malloc(sizeof(*output));
+  output->n_columns = 0;
+  output->current_line = vec_yana_complex_new(0);
+  output->lines = vec_line_new(0);
+  output->isdB = vec_bool_new(0);
+  return output;
+}
+
+void
+uforth_output_free(uforth_output_t *output)
+{
+  for (int i = 0; i < vec_line_count(output->lines); ++i) {
+    line_t line = vec_line(output->lines)[i];
+    vec_yana_complex_free(line);
+  }
+  vec_yana_complex_free(output->current_line);
+  vec_line_free(output->lines);
+  free(output);
+}
+
+static yana_real_t
+complex_to_real(bool isdB, yana_complex_t value)
+{
+  return isdB ? cabs(value) : creal(value);
+}
+
+void
+uforth_output_print(uforth_output_t *output)
+{
+  for (int j = 0; j < vec_line_count(output->lines); ++j) {
+    line_t line = vec_line(output->lines)[j];
+    line_t prev = NULL, next = NULL;
+
+    if (j > 0) {
+      prev = vec_line(output->lines)[j + 1];
+    }
+    if (j < vec_line_count(output->lines) - 1) {
+      next = vec_line(output->lines)[j + 1];
+    }
+    int c = vec_yana_complex_count(line);
+    for (int i = 0; i < c; ++i) {
+      /* Don't sum the complex with the low pass filter,
+       * otherwise it messes up with the phase,
+       * the imaginary part is not used, it's the output */
+      bool isdB = vec_bool(output->isdB)[i];
+      yana_real_t rvalue = complex_to_real(isdB, vec_yana_complex(line)[i]);
+      int count = 1;
+      if (0 && prev) {
+        rvalue += complex_to_real(isdB, vec_yana_complex(prev)[i]);
+        ++count;
+      }
+      if (0 && next) {
+        rvalue += complex_to_real(isdB, vec_yana_complex(next)[i]);
+        ++count;
+      }
+      rvalue /= count;
+      if (isdB) {
+        fprintf(stdout, "%1.12g\t", 20 * log10(rvalue));
+      } else {
+        fprintf(stdout, "%1.12g\t", rvalue);
+      }
+    }
+    if (c)
+      fprintf(stdout, "\n");
+  }
+}
+
+static void
+uforth_output_dot_dB(uforth_output_t *output, yana_complex_t value)
+{
+  vec_bool_push_back(output->isdB, true);
+  vec_yana_complex_push_back(output->current_line, value);
+}
+
+static void
+uforth_output_dot(uforth_output_t *output, yana_complex_t value)
+{
+  vec_bool_push_back(output->isdB, false);
+  vec_yana_complex_push_back(output->current_line, value);
+}
+
+bool
+uforth_output_column_is_dB(uforth_output_t *output, int column)
+{
+  assert(column < vec_bool_count(output->isdB));
+  return vec_bool(output->isdB)[column];
+}
+
+static void
+uforth_output_newline(uforth_output_t *output)
+{
+  int current_columns = vec_yana_complex_count(output->current_line);
+  if (output->n_columns == 0) {
+    output->n_columns = current_columns;
+  } else {
+    assert(current_columns == output->n_columns && "Sparse output table!");
+  }
+  vec_line_push_back(output->lines, output->current_line);
+  output->current_line = vec_yana_complex_new(0);
+}
+
+yana_complex_t
+uforth_output_value(uforth_output_t *output, int line, int column)
+{
+  assert(column < output->n_columns);
+  assert(line < vec_line_count(output->lines));
+  return vec_yana_complex(vec_line(output->lines)[line])[column];
+}
+
+void
+uforth_output_set(uforth_output_t *output, int line, int column, yana_complex_t value)
+{
+  assert(column < output->n_columns);
+  assert(line < vec_line_count(output->lines));
+  vec_yana_complex(vec_line(output->lines)[line])[column] = value;
+}
+
+int
+uforth_output_columns(uforth_output_t *output)
+{
+  return output->n_columns;
+}
+
+int
+uforth_output_lines(uforth_output_t *output)
+{
+  return vec_line_count(output->lines);
+}
+
 struct uforth_heap
 {
   yana_map_t *map;
@@ -141,15 +290,13 @@ struct uforth_heap
 uforth_token_t *
 uforth_token_new(uforth_token_type_t type,
 		 const char *symbol,
-		 yana_real_t r,
 		 yana_complex_t c)
 {
   uforth_token_t *token = calloc(1, sizeof *token);
   assert( NULL != token );
   token->type = type;
-  token->r = r;
+  token->v = c;
   token->symbol = symbol?strdup(symbol):NULL;
-  token->c = c;
   token->next = NULL;
   return token;
 }
@@ -169,7 +316,7 @@ static void heap_entry_free(yana_pair_t *pair)
 static int heap_entry_compar(const yana_pair_t *lhs,
 			      const yana_pair_t *rhs)
 {
-  
+
   return strcmp((const char*)lhs->key, (const char*)rhs->key);
 }
 uforth_heap_t *
@@ -196,9 +343,12 @@ uforth_heap_get(uforth_heap_t *heap, const char *name)
   return pair->value;
 }
 void
-uforth_heap_set(uforth_heap_t *heap, const char *name, yana_complex_t value)
+uforth_heap_set(uforth_heap_t *heap,
+                uforth_token_type_t type,
+                const char *name,
+                yana_complex_t c)
 {
-  uforth_token_t *token = uforth_token_new(UF_VALUE_COMPLEX, name, 0.L, value);
+  uforth_token_t *token = uforth_token_new(type, name, c);
   yana_pair_t *pair = yana_pair_new(token->symbol, token);
   assert( NULL != pair );
   yana_map_remove(heap->map, token->symbol);
@@ -345,6 +495,8 @@ compile(const char *buf, int stack_size,
 	    token_type = UF_C;
 	  else if ( 0 == strcasecmp(token, "_MU") )
 	    token_type = UF_MU;
+	  else if ( 0 == strcasecmp(token, "IMPULSE") )
+	    token_type = UF_IMPULSE;
 	  else if ( 0 == strcasecmp(token, "F") )
 	    token_type = UF_F;
 	  else if ( 0 == strcasecmp(token, "S") )
@@ -422,7 +574,7 @@ compile(const char *buf, int stack_size,
 		  r = 0.;
 		}
 	    }
-	  uforth_token_t *new_token = uforth_token_new(token_type, token, r, 0.);
+	  uforth_token_t *new_token = uforth_token_new(token_type, token, r);
 	  *uf_ctx->last = new_token;
 	  uf_ctx->last = &new_token->next;
 	}
@@ -447,37 +599,28 @@ uforth_compile_command(const char *buf, int stack_size,
 }
 
 static status_t
-pop_real(uforth_context_t *uf_ctx, yana_real_t *rp)
+pop_dB(uforth_context_t *uf_ctx, yana_complex_t *cp)
 {
   int pos = uf_ctx->stack_pos-1;
-  yana_complex_t c;
   if ( uf_ctx->stack_pos <= 0 )
     {
       ERROR("stack underflow");
       return FAILURE;
     }
-  
+
   switch (uf_ctx->stack[pos].type)
     {
-    case UF_VALUE_REAL:
-      *rp = uf_ctx->stack[pos].r;
-      break;
-    case UF_VALUE_COMPLEX:
-      c = uf_ctx->stack[pos].c;
-      if ( fabs(cimag(c)) > 0.000001 )
-	{
-	  ERROR("stack element is complex, real was expected");
-	  return FAILURE;
-	}
-      *rp = creal(c);
+    case UF_VALUE_DB:
+      *cp = uf_ctx->stack[pos].v;
       break;
     default:
-      ERROR("unexpected type in stack, real was expected");
+      ERROR("Unexpected type in stack, dB was expected");
       return FAILURE;
     }
   uf_ctx->stack_pos = pos;
   return SUCCESS;
 }
+
 static status_t
 pop_complex(uforth_context_t *uf_ctx, yana_complex_t *cp)
 {
@@ -487,20 +630,37 @@ pop_complex(uforth_context_t *uf_ctx, yana_complex_t *cp)
       ERROR("stack underflow");
       return FAILURE;
     }
-  
+
   switch (uf_ctx->stack[pos].type)
     {
     case UF_VALUE_REAL:
-      *cp = uf_ctx->stack[pos].r + I * 0.;
-      break;
     case UF_VALUE_COMPLEX:
-      *cp = uf_ctx->stack[pos].c;
+      *cp = uf_ctx->stack[pos].v;
       break;
+    case UF_VALUE_DB:
+      ERROR("Unexpected TOS dB value, dB is a printable only data type");
+      return FAILURE;
     default:
-      ERROR("unexpected type in stack, real was expected");
+      ERROR("Unexpected type in stack, complex was expected");
       return FAILURE;
     }
   uf_ctx->stack_pos = pos;
+  return SUCCESS;
+}
+
+static status_t
+pop_real(uforth_context_t *uf_ctx, yana_real_t *rp)
+{
+  yana_complex_t c;
+  status_t status = pop_complex(uf_ctx, &c);
+  if (SUCCESS != status) {
+    return status;
+  }
+  if (cimag(c) != 0) {
+    ERROR("stack element is complex, real was expected");
+    return FAILURE;
+  }
+  *rp = creal(c);
   return SUCCESS;
 }
 
@@ -514,8 +674,7 @@ push_real(uforth_context_t *uf_ctx, yana_real_t r)
       return FAILURE;
     }
   uf_ctx->stack[pos].type = UF_VALUE_REAL;
-  uf_ctx->stack[pos].c = 0;
-  uf_ctx->stack[pos].r = r;
+  uf_ctx->stack[pos].v = r;
   uf_ctx->stack_pos = pos + 1;
   return SUCCESS;
 }
@@ -530,12 +689,35 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
       return FAILURE;
     }
   uf_ctx->stack[pos].type = UF_VALUE_COMPLEX;
-  uf_ctx->stack[pos].c = c;
-  uf_ctx->stack[pos].r = 0;
+  uf_ctx->stack[pos].v = c;
   uf_ctx->stack_pos = pos + 1;
   return SUCCESS;
 }
 
+static status_t
+push_dB(uforth_context_t *uf_ctx, yana_complex_t dB)
+{
+  int pos = uf_ctx->stack_pos;
+  if ( pos+1 >= uf_ctx->stack_size )
+    {
+      ERROR("stack overflow");
+      return FAILURE;
+    }
+  uf_ctx->stack[pos].type = UF_VALUE_DB;
+  uf_ctx->stack[pos].v = dB;
+  uf_ctx->stack_pos = pos + 1;
+  return SUCCESS;
+}
+
+#define POP_DB(_op_, _var_)						\
+  do {									\
+    status = pop_dB(uf_ctx, &(_var_));                                  \
+    if ( SUCCESS != status )						\
+      {									\
+	ERROR(_op_" expects a dB value");				\
+	goto loop_exit;							\
+      }									\
+  } while (0)
 #define POP_REAL(_op_, _var_)						\
   do {									\
     status = pop_real(uf_ctx, &(_var_));				\
@@ -555,6 +737,15 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
       }									\
   } while (0)
 
+#define PUSH_DB(_op_, _val_)						\
+  do {									\
+    status = push_dB(uf_ctx, (_val_));                                  \
+    if ( SUCCESS != status )						\
+      {									\
+	ERROR("on "_op_);						\
+	goto loop_exit;							\
+      }									\
+  } while (0)
 #define PUSH_REAL(_op_, _val_)						\
   do {									\
     status = push_real(uf_ctx, (_val_));				\
@@ -629,13 +820,61 @@ push_complex(uforth_context_t *uf_ctx, yana_complex_t c)
     tok = l_stack[l_stack_pos-1];				\
   } while (0)
 
+
+static yana_real_t
+get_freq(simulation_context_t *sc, int i) {
+  yana_real_t freq = 1;
+  if (sc) {
+    freq = simulation_context_get_f(sc, i);
+    if (sc->impulse) {
+      //freq = freq / (double)sc->log_hz_max;
+    }
+  }
+    return freq;
+}
+static yana_real_t
+get_actual_freq(simulation_context_t *sc, int i) {
+  return get_freq(sc, i);
+  //return sc?simulation_context_get_f(sc, i):1.L
+}
+
+static int counter = 0;
+double start;
+
+
+void ctor(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  start = 1000000000 * ts.tv_sec + ts.tv_nsec;
+}
+
+__attribute__((destructor))
+static void dtor(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  double end = 1000000000 * ts.tv_sec + ts.tv_nsec;
+  fprintf(stderr,
+          "%d INSTRUCTIONS\n"
+          "T = %fms\n"
+          "%f MIPS\n"
+          "cycle %fns\n"
+          , counter
+          , (end-start) * 1e-6
+          , (double)counter / ((end-start) * 1e-3)
+          , (end-start)/counter
+          );
+}
+
 static status_t
 uforth_execute_step(uforth_context_t *uf_ctx,
 		    simulation_context_t *sc,
 		    simulation_t *simulation,
 		    uforth_heap_t *heap,
 		    yana_complex_t *resultp,
-		    int i)
+		    int i,
+                    int smoothing,
+                    int impulse,
+                    uforth_output_t *output)
 {
   uforth_token_t *l_stack[16];
   int l_stack_pos = 0;
@@ -643,7 +882,8 @@ uforth_execute_step(uforth_context_t *uf_ctx,
   uforth_token_t *token;
   yana_real_t r1, r2, r3;
   yana_complex_t c1, c2;
-  yana_real_t f = sc?simulation_context_get_f(sc, i):0.L;
+  yana_real_t freq = get_freq(sc, i);
+  yana_real_t actual_freq = get_actual_freq(sc, i);
   int s = sc?simulation_context_get_n_samples(sc):0;
   uforth_token_type_t head_type;
   bool printed = false;
@@ -658,18 +898,19 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	token && !end;
 	token = token->next )
     {
+      ++counter;
       switch (token->type)
 	{
 	case UF_FREEAIR:
 	  POP_REAL("( x X -- x ) FREEAIR", r2);
 	  POP_REAL("( X x -- x ) FREEAIR", r1);
-	  PUSH_COMPLEX("FREEAIR", free_air_impedance(f, r1, r2));
+	  PUSH_COMPLEX("FREEAIR", free_air_impedance(actual_freq, r1, r2));
 	  break;
 	case UF_DIRIMP:
 	  POP_REAL("( x x X -- x ) FREEAIR", r3); // theta
 	  POP_REAL("( x X x -- x ) FREEAIR", r2); // r
 	  POP_REAL("( X x x -- x ) FREEAIR", r1); // Sd
-	  PUSH_COMPLEX("FREEAIR", free_air_dir_impedance(f, r2, r1, r3));
+          PUSH_COMPLEX("DIRIMP", free_air_dir_impedance(actual_freq, r2, r1, r3));
 	  break;
 	case UF_MUL:
 	  POP_COMPLEX("( x X -- x ) MUL", c2);
@@ -712,7 +953,6 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  POP_COMPLEX("( X -- x ) LN", c1);
 	  PUSH_COMPLEX("LN", clog(c1));
 	  break;
-
 	case UF_COS:
 	  POP_COMPLEX("( X -- x ) COS", c1);
 	  PUSH_COMPLEX("COS", ccos(c1));
@@ -778,7 +1018,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  break;
 	case UF_PDELAY:
 	  POP_REAL("( X -- x ) PDELAY", r1);
-	  PUSH_REAL("PDELAY",  - r1 /( 2. * M_PI * f ) );
+	  PUSH_REAL("PDELAY",  - r1 /( 2. * M_PI * actual_freq ) );
 	  break;
 	case UF_PREV_STEP:
 	  if ( 0 == i )
@@ -787,7 +1027,8 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      break;
 	    }
 	  --i;
-	  f = simulation_context_get_f(sc, i);
+	  freq = get_freq(sc, i);
+          actual_freq = get_actual_freq(sc, i);
 	  break;
 	case UF_NEXT_STEP:
 	  if ( s-1 == i )
@@ -796,7 +1037,8 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      break;
 	    }
 	  ++i;
-	  f = simulation_context_get_f(sc, i);
+	  freq = get_freq(sc, i);
+          actual_freq = get_actual_freq(sc, i);
 	  break;
 	case UF_IMAG:
 	  POP_COMPLEX("( X -- x ) IMAG", c1);
@@ -810,42 +1052,55 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  PUSH_REAL("PI", M_PI);
 	  break;
 	case UF_RHO:
-	  PUSH_REAL("PI", YANA_RHO);
+	  PUSH_REAL("RHO", YANA_RHO);
 	  break;
 	case UF_C:
-	  PUSH_REAL("PI", YANA_C);
+	  PUSH_REAL("C", YANA_C);
 	  break;
 	case UF_MU:
-	  PUSH_REAL("PI", YANA_MU);
+	  PUSH_REAL("MU", YANA_MU);
 	  break;
+        case UF_IMPULSE:
+          PUSH_REAL("IMPULSE", (yana_real_t)impulse);
+          break;
 	case UF_F:
-	  PUSH_REAL("F", f);
+          PUSH_REAL("F", freq);
 	  break;
 	case UF_S:
-	  PUSH_REAL("F", i);
+	  PUSH_REAL("S", i);
 	  break;
 	case UF_I:
 	  PUSH_COMPLEX("I", 0. + I * 1.);
 	  break;
 	case UF_DB:
 	  POP_COMPLEX("( X -- x ) DB", c1);
-	  PUSH_REAL("DB", 20. * log10(cabs(c1)));
+	  PUSH_DB("DB", c1);
+	  //PUSH_REAL("DB", 20. * log10(cabs(c1)));
 	  break;
 	case UF_DBSPL:
-	  POP_COMPLEX("( X -- x ) DB", c1);
-	  PUSH_REAL("DB", 20. * log10(cabs(c1)/20e-6));
+	  POP_COMPLEX("( X -- x ) DBSPL", c1);
+          PUSH_DB("DBSPL", c1/20e-6);
+	  //PUSH_REAL("DBSPL", 20. * log10(cabs(c1)/20e-6));
 	  break;
 	case UF_DOT:
 	  HEAD_TYPE(head_type);
 	  if ( UF_VALUE_REAL == head_type )
 	    {
 	      POP_REAL("( X -- ) DOT", r1);
-	      fprintf(stdout, "%1.12g\t", (double)r1);
+              uforth_output_dot(output, r1);
+	      //fprintf(stdout, "%1.12g\t", (double)r1);
 	    }
 	  else if ( UF_VALUE_COMPLEX == head_type )
 	    {
 	      POP_COMPLEX("( X -- ) DOT", c1);
-	      fprintf(stdout, "%1.12g\t", (double)cabs(c1));
+              uforth_output_dot(output, c1);
+	      //fprintf(stdout, "%1.12g\t", (double)cabs(c1));
+	    }
+	  else if ( UF_VALUE_DB == head_type )
+	    {
+	      POP_DB("( X -- ) DOT", c1);
+              uforth_output_dot_dB(output, c1);
+	      //fprintf(stdout, "%1.12g\t", (double)cabs(c1));
 	    }
 	  printed=true;
 	  break;
@@ -868,8 +1123,15 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	      status = FAILURE;
 	      goto loop_exit;
 	    }
-	  POP_COMPLEX("(X -- ) TO", c1);
-	  uforth_heap_set(heap, token->symbol, c1);
+          {
+            HEAD_TYPE(head_type);
+            if (head_type == UF_VALUE_DB) {
+              POP_DB("(X -- ) TO", c1);
+            } else {
+              POP_COMPLEX("(X -- ) TO", c1);
+            }
+            uforth_heap_set(heap, head_type, token->symbol, c1);
+          }
 	  break;
 	case UF_SWAP:
 	  if ( uf_ctx->stack_pos < 2 )
@@ -886,7 +1148,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	  break;
 	case UF_IF:
 	  POP_COMPLEX("(X -- ) IF", c1);
-	  if ( 0. == c1 )
+	  if ( 0. == cabs(c1) )
 	    {
 	      int depth=-1;
 	      uforth_token_t *orig_position = token;
@@ -1002,13 +1264,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	case UF_GT:
 	  POP_COMPLEX("(x X -- ) IF", c2);
 	  POP_COMPLEX("(X x -- ) IF", c1);
-	  if ( cimag(c1) != 0.L || cimag(c2) != 0.L )
-	    {
-	      ERROR("comparison between complex numbers");
-	      status = FAILURE;
-	      goto loop_exit;
-	    }
-	  r1=creal(c1); r2=creal(c2);
+	  r1=cabs(c1); r2=cabs(c2);
 	  PUSH_REAL("comparison",
 		    UF_LT == token->type ? ( r1<r2)
 		    : UF_LE == token->type ? (r1<=r2)
@@ -1019,11 +1275,15 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 		    : 0);
 	  break;
 	case UF_VALUE_REAL:
-	  PUSH_REAL("real literal", token->r);
+	  PUSH_REAL("real literal", token->v);
+	  break;
+	case UF_VALUE_DB:
+	  assert(!"not possible");
+	  PUSH_DB("dB literal", token->v);
 	  break;
 	case UF_VALUE_COMPLEX:
 	  assert(!"not possible");
-	  PUSH_REAL("complex literal", token->c);
+	  PUSH_COMPLEX("complex literal", token->v);
 	  break;
 	case UF_VALUE_SIMULATION:
 	  {
@@ -1031,7 +1291,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 	    const uforth_token_t *heap_token = heap_token = uforth_heap_get(heap, token->symbol);
 	    if ( NULL != heap_token )
 	      {
-		PUSH_COMPLEX("heap word", heap_token->c);
+		PUSH_COMPLEX("heap word", heap_token->v);
 	      }
 	    else
 	      {
@@ -1050,16 +1310,40 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 		    status = FAILURE;
 		    goto loop_exit;
 		  }
-		PUSH_COMPLEX("sim", sim_array[i]);
+                yana_complex_t value = sim_array[i];
+                if (smoothing) {
+                  if (0) {
+                    int j;
+                    int b = i - smoothing;
+                    if (b < 0) b = 0;
+                    for (j = b; j < i ; ++j) {
+                      value += sim_array[j];
+                    }
+                    value /= (i - b);
+                  } else {
+                    int j;
+                    int b = i + smoothing;
+                    if (b >= simulation_context_get_n_samples(sc)) b = simulation_context_get_n_samples(sc);
+                    int n = 1;
+                    for (j = i + 1; j <= b ; ++j) {
+                      ++n;
+                      //TODO: invalid read here
+                      value += sim_array[j];
+                    }
+                    value /= n;
+                  }
+                }
+		PUSH_COMPLEX("sim", value);
 	      }
 	  }
 	  break;
 	}
     }
  loop_exit:
-  
-  if (printed)
-    fprintf(stdout, "\n");
+
+  if (printed) {
+    //fprintf(stdout, "\n");
+  }
 
   if ( SUCCESS != status && NULL != token )
     {
@@ -1106,7 +1390,7 @@ uforth_execute_step(uforth_context_t *uf_ctx,
     }
   if ( free_heap )
     uforth_heap_free(heap);
-  
+
   return status;
 }
 
@@ -1115,22 +1399,34 @@ uforth_execute(uforth_context_t *uf_ctx,
 	       simulation_context_t *sc,
 	       simulation_t *simulation,
 	       uforth_heap_t *heap,
-	       yana_complex_t *resultp)
+	       yana_complex_t *resultp,
+               int smoothing,
+               int impulse,
+               uforth_output_t **outputp)
 {
+  ctor();
   int i, s;
   status_t status;
+  uforth_output_t *output = uforth_output_new();
   if ( NULL == sc || NULL == simulation )
     s = 1;
   else
     s = simulation_context_get_n_samples(sc);
   for ( i = 0 ; i < s ; ++i )
     {
-      status = uforth_execute_step(uf_ctx, sc, simulation, heap, resultp, i);
+      status = uforth_execute_step(uf_ctx, sc, simulation, heap, resultp, i,
+                                   smoothing, impulse, output);
       if ( SUCCESS != status )
 	{
 	  ERROR("Execution failed");
 	  return status;
 	}
+      uforth_output_newline(output);
     }
+  if (outputp) {
+    *outputp = output;
+  } else {
+    uforth_output_free(output);
+  }
   return SUCCESS;
 }

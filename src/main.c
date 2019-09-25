@@ -1,5 +1,5 @@
-/* 
- * Copyright (c) 2013-2015, Guillaume Gimenez <guillaume@blackmilk.fr>
+/*
+ * Copyright (c) 2013-2019, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,10 @@ struct option options[] =
     { "steps-per-decade", required_argument, NULL, 'p'},
     { "from-log-frequency", required_argument, NULL, 'F'},
     { "to-log-frequency", required_argument, NULL, 'T' },
+    // 0:Dirac distribution, 1:Heaviside distribution, 2: ramp
+    { "impulse", required_argument, NULL, 'i'},
+    // smoothing bof... terrible low pass filter
+    { "smooth-output", required_argument, NULL, 'm'},
     {}
   };
 
@@ -111,12 +115,15 @@ int main(int argc, char **argv)
   int from = 1;
   int to = 5;
   int interactive = 0;
-  int steps_per_decade = 50;
+  int impulse = 0;
+  double frequence_exponent = 0;
+  int steps_per_decade = -1;
   char *netlist_file=NULL;
   char *command=NULL;
-  
+  int smoothing = 0;
+
   make_short_options(short_options);
-  
+
   while ( -1 != ( c = getopt_long(argc, argv, short_options, options, NULL) ))
     switch (c)
       {
@@ -132,6 +139,13 @@ int main(int argc, char **argv)
       case 's':
 	interactive=1;
 	break;
+      case 'i':
+	impulse=1;
+        frequence_exponent = strtod(optarg, NULL);
+	break;
+      case 'm':
+        smoothing = strtol(optarg, 0, 0);
+        break;
       case 'f':
 	from = strtol(optarg, 0, 0);
 	break;
@@ -166,8 +180,15 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
     }
 
-  
-  simulation_context_t *sc = simulation_context_new(from, to, steps_per_decade);
+  if (steps_per_decade == -1) {
+    if (impulse)
+      steps_per_decade = 1;
+    else
+      steps_per_decade = 50;
+  }
+
+
+  simulation_context_t *sc = simulation_context_new(impulse, from, to, steps_per_decade);
   if ( NULL == sc )
     {
       fprintf(stderr, "ERROR: Failed to create a simulation context\n");
@@ -186,7 +207,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "ERROR: Failed to preprocess netlist\n");
       exit(EXIT_FAILURE);
     }
-  
+
   status = netlist_new(sc, netlist_buf, &netlist);
   if ( SUCCESS != status )
     {
@@ -197,12 +218,15 @@ int main(int argc, char **argv)
   if ( SUCCESS != status )
     {
       fprintf(stderr, "ERROR: Failed to create nodelist\n");
+      netlist_dump(netlist, NULL);
       exit(EXIT_FAILURE);
     }
   status = simulation_new(sc, nodelist, &simulation);
   if ( SUCCESS != status )
     {
       fprintf(stderr, "ERROR: Failed to create simulation\n");
+      netlist_dump(netlist, NULL);
+      nodelist_dump(nodelist);
       exit(EXIT_FAILURE);
     }
 
@@ -215,6 +239,10 @@ int main(int argc, char **argv)
   simulation_set_values(simulation);
   simulation_solve(simulation);
 
+  if (impulse) {
+    //simulation_impulse(sc, simulation, frequence_exponent);
+  }
+
   uforth_context_t *uf_ctx = NULL;
 
   if ( command )
@@ -226,7 +254,16 @@ int main(int argc, char **argv)
 
   if ( uf_ctx )
     {
-      status = uforth_execute(uf_ctx, sc, simulation, NULL, NULL);
+      uforth_output_t *output;
+      status = uforth_execute(uf_ctx, sc, simulation, NULL, NULL,
+                              smoothing, impulse, &output);
+      if (SUCCESS == status) {
+        if (impulse) {
+          result_impulse(sc, output, frequence_exponent);
+        }
+        uforth_output_print(output);
+        uforth_output_free(output);
+      };
       uforth_free(uf_ctx);
     }
 
@@ -239,8 +276,12 @@ int main(int argc, char **argv)
 	  bool run = false;
 	  if ( 0 == strcasecmp(line, "LIST") )
 	    fputs(netlist_buf, stderr);
-	  else if ( 0 == strcasecmp(line, "NETLIST") )
-	    netlist_dump(netlist);
+	  else if ( 0 == strncasecmp(line, "NETLIST ", sizeof("NETLIST ") - 1) ) {
+	    netlist_dump(netlist, line + sizeof("NETLIST ") - 1);
+          }
+	  else if ( 0 == strncasecmp(line, "NETLIST", sizeof("NETLIST") - 1) ) {
+	    netlist_dump(netlist, NULL);
+          }
 	  else if ( 0 == strcasecmp(line, "NODELIST") )
 	    nodelist_dump(nodelist);
 	  else if ( 0 == strcasecmp(line, "SIMULATION") )
@@ -261,7 +302,14 @@ int main(int argc, char **argv)
 		status = uforth_compile_command(line, 1000, &uf_ctx);
 	      if ( SUCCESS == status )
 		{
-		  uforth_execute(uf_ctx, sc, simulation, NULL, NULL);
+                  uforth_output_t *output;
+		  uforth_execute(uf_ctx, sc, simulation, NULL, NULL,
+                                 smoothing, impulse, &output);
+                  if (impulse) {
+                    result_impulse(sc, output, frequence_exponent);
+                  }
+                  uforth_output_print(output);
+                  uforth_output_free(output);
 		  uforth_free(uf_ctx);
 		}
 	    }
@@ -270,7 +318,7 @@ int main(int argc, char **argv)
 	  free(line);
 	}
     }
-  
+
   free(command);
   free(netlist_file);
   free(netlist_buf);

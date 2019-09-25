@@ -7,7 +7,7 @@ This nodal analysis software is dedicated to electro-mechanical-acoustical equiv
 
 At this time, only linear analysis in the frequency domain is supported. A simple Gauss-Jordan algorithm is used and no special attention is taken on conditioning the system of equations.
 
-It is work in progress.
+It is still work in progress.
 
 This library will be used in a improved version of the loudspeaker graphing calculator ( https://github.com/ploki/Loudspeaker/ )
 
@@ -50,7 +50,7 @@ Installation
 
 ### Prerequisites
 
-GSL is needer in order to build yanapack. You can grab it from ftp.gnu.org/pub/gnu/gsl
+GSL is needed in order to build yanapack. You can grab it from ftp.gnu.org/pub/gnu/gsl
 or install it using your distribution channel
 
 ``` bash
@@ -84,19 +84,19 @@ Simulation example
 
 ``` bash
 $ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir
-10	     	61.4009337923	61.4008341279	61.400634798	
-21.5443469003	73.6382199187	73.6377573139	73.6368320797	
-46.4158883361	86.6703029922	86.6681556961	86.6638605731	
-100		90.1195363133	90.1095680653	90.0896201165	
-215.443469003	88.2440781064	88.1978006968	88.1049982448	
-464.158883361	85.6225850622	85.4090506212	84.9767048102	
-1000		82.9939913009	82.1068461721	80.2707678201	
-2154.43469003	81.1144652732	80.1735093898	79.0467362715	
-4641.58883361	83.8185021294	83.1853758654	82.1128859194	
-10000		85.6055810208	83.0576454825	76.8973740717	
-21544.3469003	85.9705093178	69.9600732923	67.6158439568	
-46415.8883361	85.5790604228	42.9950594198	56.9877843479	
-100000		83.8266358783	52.6660228355	18.127421656	
+10	     	61.4009337923	61.4008341279	61.400634798
+21.5443469003	73.6382199187	73.6377573139	73.6368320797
+46.4158883361	86.6703029922	86.6681556961	86.6638605731
+100		90.1195363133	90.1095680653	90.0896201165
+215.443469003	88.2440781064	88.1978006968	88.1049982448
+464.158883361	85.6225850622	85.4090506212	84.9767048102
+1000		82.9939913009	82.1068461721	80.2707678201
+2154.43469003	81.1144652732	80.1735093898	79.0467362715
+4641.58883361	83.8185021294	83.1853758654	82.1128859194
+10000		85.6055810208	83.0576454825	76.8973740717
+21544.3469003	85.9705093178	69.9600732923	67.6158439568
+46415.8883361	85.5790604228	42.9950594198	56.9877843479
+100000		83.8266358783	52.6660228355	18.127421656
 ```
 
 This command loads the netlist from circuits/Splifftown4000XL.cir
@@ -111,20 +111,20 @@ $ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir -s
 YANAPACK: Yet Another Nodal Analysis PACKage
 INFO: running simulation on circuits/Splifftown4000XL.cir
 yanapack> F . v1 v0 - IEg / DUP . ARG DEG .
-10	      	 7.18383729769	-169.648158946	
-21.5443469003	 8.24580233096	-158.534387572	
-46.4158883361	 31.5068083514	-177.571739183	
-100		 6.05572254378	156.385407005	
-215.443469003	 6.17516376084	-174.987686669	
-464.158883361	 8.09595523	-167.148304041	
-1000		 8.96102021192	-171.981197202	
-2154.43469003	 11.5810920751	-175.041192742	
-4641.58883361	 9.31120528158	164.36790415	
-10000		 7.2895574377	171.04113864	
-21544.3469003	 6.87402627954	-179.049579849	
-46415.8883361	 7.12122947082	-168.235329689	
-100000		 8.47192784203	-155.627338105	
-yanapack> 
+10	      	 7.18383729769	-169.648158946
+21.5443469003	 8.24580233096	-158.534387572
+46.4158883361	 31.5068083514	-177.571739183
+100		 6.05572254378	156.385407005
+215.443469003	 6.17516376084	-174.987686669
+464.158883361	 8.09595523	-167.148304041
+1000		 8.96102021192	-171.981197202
+2154.43469003	 11.5810920751	-175.041192742
+4641.58883361	 9.31120528158	164.36790415
+10000		 7.2895574377	171.04113864
+21544.3469003	 6.87402627954	-179.049579849
+46415.8883361	 7.12122947082	-168.235329689
+100000		 8.47192784203	-155.627338105
+yanapack>
 ```
 
 Output is controlled using a forth like language. Here, the output is composed of the frequency, the magnitude and the phase of the impedance of the whole circuit seen from the power amplifier.
@@ -134,15 +134,15 @@ Output is controlled using a forth like language. Here, the output is composed o
 Simulation files
 ----------------
 
-This software implements a small subset of what ngspice and gnucap are capable to do.
+This software implements a small subset of what ngspice and gnucap are capable of.
 
-To start a simulation, first you need a netlist that describ the circuit, here comes the spice-like stuffs. Then, you need to ask yanapack to output what you are looking for, here comes the forth-like stuffs.
+To start a simulation, first you need a netlist that describes the circuit, here comes the spice-like stuff. Then, you need to ask yanapack to output what you are looking for, here comes the forth-like stuff.
 
-### The spice-like stuffs
+### The spice-like stuff
 
-The netlist is a list of dipole. For each dipole, you specify the magnitude, the connections with each others and other specific parameters
+The netlist is a list of dipole. For each dipole, you specify the magnitude, the connections with each others and other dipole specific parameters.
 
-Each dipole is defined on a new line. The first character specifies the type of dipole and each name must be unique for each type of dipole
+Each dipole is defined on a new line. The first character specifies the type of dipole and each name must be unique for each type of dipole.
 
 The dipoles defined are given a magnitude as a function of s where s = j&omega;.
 
@@ -233,7 +233,7 @@ Zxyz x y surface [ma][ai]
    * the second set is for the analogy selection. 'a' stands for admittance and 'i' stands for impedance
 
 The Piston radiation impedance may be found in "Electroacoustic modelling of the subwoofer enclosures" chapter 2.5
- 
+
 #### Port impedance
 ```
 Pxyz x y length surface [kK][kK][dr]
@@ -286,8 +286,8 @@ In the examples,
 
 #### Free air impedance
 Completely useless, it pollutes the circuit impedance and hence the tension source load
- 
-### The Forth-like stuffs
+
+### The Forth-like stuff
 
 The embedded Forth-like interpreter is used in different ways inside the circuit file or during the interactive sessions (with the -s parameter)
  - To display simulation results. The script is embedded in the circuit file and all lines starting with ". " (a dot and a space) are considered Forth code
@@ -303,7 +303,7 @@ The DOT word output the magnitude of the complex number which is on the top of t
 
 #### Arithmetic words
  - __MUL__: 2 3 MUL . => 6
- - __*__: MUL alias 
+ - __*__: MUL alias
  - __DIV__: 2 3 DIV . => .6667
  - __/__: DIV alias
  - __ADD__: 2 3 ADD . => 5
@@ -336,6 +336,7 @@ The DOT word output the magnitude of the complex number which is on the top of t
  - __TO__: pop a value from the stack and assign the value to the word following TO
 
 #### Comparison words
+The comparison is performed on the magnitude of the values in TOS and NOS.
  - __\_LT__: push a non zero value if NOS < TOS
  - __&lt;__: \_LT alias
  - __\_LE__: push a non zero value if NOS <= TOS
@@ -354,7 +355,7 @@ The DOT word output the magnitude of the complex number which is on the top of t
 #### Control words
  - __DOT__: pop an element from the stack and output its magnitude
  - __.__: DOT alias
- - __IF__: jump to the word following the next ELSE word if popped value is 0
+ - __IF__: jump to the word following the next ELSE word if the magnitude of the popped value is 0
  - __ELSE__: jump to the word following the next THEN
  - __THEN__: do nothing
  - __BEGIN__: do nothing
@@ -377,7 +378,7 @@ The DOT word output the magnitude of the complex number which is on the top of t
  - __S__: push the current simulation step
  - __DB__: pop an amplitude and push its dB value (it means it's 20log10(x))
  - __DBSPL__: pop a pression in Pa and push its dB SPL value (20log10(x/(20e-6)))
- - __DEG__: pop an angle in radian push its value in degrees 
+ - __DEG__: pop an angle in radian push its value in degrees
  - __PDELAY__: pop a complex value and push the phase delay in regard to its frequency
  - __PREV_STEP__: switch to the last simulation step
  - __&lt;&lt;&lt;__: PREV_STEP alias

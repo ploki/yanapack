@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -55,7 +55,7 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
   netlist->sc = sc;
 
   netlist->dipoles = vec_dipole_new(0);
- 
+
   for ( line = strtok_r(netlist_str, "\n", &tmp1) ;
         line != NULL ;
 	line = strtok_r(NULL, "\n", &tmp1) )
@@ -77,7 +77,7 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
 	param1 = strtok_r(NULL, " ", &tmp2);
       if ( NULL != param1 )
 	param2 = strtok_r(NULL, " ", &tmp2);
-      
+
       if ( NULL == name )
 	{
 	  fprintf(stderr, "Malformed line in netlist\n");
@@ -103,7 +103,7 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
       vec_dipole_push_back(netlist->dipoles, new_dipole);
       if ( SUCCESS != status )
 	goto end;
-    
+
     }
  end:
   if ( SUCCESS == status && NULL != netlistp )
@@ -114,19 +114,24 @@ status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, net
   return status;
 }
 
-void netlist_dump(netlist_t *netlist)
+void netlist_dump(netlist_t *netlist, const char *filter)
 {
   int i;
   printf("* Netlist dump *\n");
   for( i = 0 ; i < vec_dipole_count(netlist->dipoles) ; ++i )
     {
-      printf("%s\t%s\t%s\t%f\t%s\t%s\n",
-	     vec_dipole(netlist->dipoles)[i].name,
+      const char *dipole_name = vec_dipole(netlist->dipoles)[i].name;
+      if (filter) {
+        if (strstr(dipole_name, filter) != dipole_name)
+          continue;
+      }
+      printf("%s\t%s\t%s\t%g\t%s\t%s\n",
+	     dipole_name,
 	     vec_dipole(netlist->dipoles)[i].node1,
 	     vec_dipole(netlist->dipoles)[i].node2,
 	     (double)vec_dipole(netlist->dipoles)[i].magnitude,
 	     vec_dipole(netlist->dipoles)[i].param1?vec_dipole(netlist->dipoles)[i].param1:"",
 	     vec_dipole(netlist->dipoles)[i].param2?vec_dipole(netlist->dipoles)[i].param2:"");
-      
+
     }
 }

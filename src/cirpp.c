@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2015, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -190,7 +190,7 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
     {
       subckt_name = token[n_tokens-1];
     }
-  
+
   if ( NULL == subckt_name )
     {
       fprintf(stderr, "ERROR: unable to get subckt name for %s\n", name);
@@ -223,17 +223,17 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
       status = uforth_compile_command(buf, 1000, &uf_ctx);
       if ( SUCCESS != status )
 	  goto end;
-      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, NULL);
+      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, NULL, 0, -1, NULL);
       if ( SUCCESS != status )
 	goto end;
       uforth_free(uf_ctx);
     }
-  
+
   //execute forth in netlist
   char *local_buf=NULL;
   size_t local_size;
   FILE *local = open_memstream(&local_buf, &local_size);
-  
+
   const char *p=sub->netlist;
   for (;;)
     {
@@ -261,7 +261,7 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
       if ( SUCCESS != status )
 	  goto end;
       yana_complex_t result;
-      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, &result);
+      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, &result, 0, -1, NULL);
       if ( SUCCESS != status )
 	goto end;
       fprintf(local, " %1.12g ", cabs(result));
@@ -306,9 +306,9 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
 	}
       fprintf(output, "\n");
     }
-  
+
   free(local_buf);
-  
+
   status = SUCCESS;
  end:
   free(line);
@@ -324,7 +324,7 @@ cirpp_internal(const char *input_const, FILE *output)
   status_t status = FAILURE;
   subckt_t *sub = NULL;
   subckt_heap_t *subckt_heap = subckt_heap_new();
-  
+
   if ( NULL == output )
     goto end;
   for ( p = input ;
@@ -417,7 +417,7 @@ cirpp_internal(const char *input_const, FILE *output)
       else
 	fprintf(output, "%s\n", line);
     }
-  
+
   subckt_heap_free(subckt_heap);
   status = SUCCESS;
  end:
@@ -452,7 +452,7 @@ cirpp_load_internal(const char *netlist_file, int depth, FILE *output)
       fprintf(stderr, "ERROR: too many recursions in .include\n");
       return FAILURE;
     }
-  
+
   ret = stat(netlist_file, &st);
   if (ret < 0 )
     {
@@ -524,7 +524,7 @@ cirpp_load(const char *netlist_file, char **outputp)
   if ( SUCCESS != status )
     goto end;
   status = cirpp(tmpbuf, outputp);
-  
+
  end:
   free(tmpbuf);
   return status;

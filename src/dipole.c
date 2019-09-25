@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -97,10 +97,10 @@ status_t dipole_init_semi(dipole_t *dipole)
 {
   //[K]idx node1 node2 magnitude pow_of_freq [cri][ia]
   enum {
-    semi_complex,
+    semi_inductance,
     semi_real,
     semi_imag
-  } type = semi_complex;
+  } type = semi_inductance;
   enum {
     semi_impedance,
     semi_admitance
@@ -116,7 +116,7 @@ status_t dipole_init_semi(dipole_t *dipole)
     {
       switch(dipole->param2[0])
 	{
-	case 'c': type = semi_complex; break;
+	case 's': type = semi_inductance; break;
 	case 'r': type = semi_real; break;
 	case 'i': type = semi_imag; break;
 	default:
@@ -139,11 +139,13 @@ status_t dipole_init_semi(dipole_t *dipole)
     {
       yana_real_t f = simulation_context_get_f(dipole->sc,i);
       yana_real_t w = 2.L * M_PI * f;
-      yana_complex_t v = 0;
-      if ( semi_real == type || semi_complex == type )
-	v+= pow(w, pow_of_freq) * dipole->magnitude;
-      if ( semi_imag == type || semi_complex == type )
-	v+= I * pow(w, pow_of_freq) * dipole->magnitude;
+      yana_complex_t v;
+      if ( semi_real == type )
+	v = pow(w, pow_of_freq) * dipole->magnitude;
+      else if ( semi_imag == type )
+	v = I * pow(w, pow_of_freq) * dipole->magnitude;
+      else
+        v = dipole->magnitude * cpow(I * w, pow_of_freq);
       if ( semi_impedance == analogy )
 	dipole->values[i] = v;
       else
@@ -202,7 +204,7 @@ yana_real_t H1(yana_real_t z)
 
 yana_complex_t piston_radiator(yana_real_t ka, yana_real_t magnitude)
 {
-  yana_complex_t imp = 
+  yana_complex_t imp =
     (
      magnitude * ( 1.L - gsl_sf_bessel_J1 (2.L*ka) / (ka) )
      + I * magnitude * H1(2.L*ka ) / ka
@@ -223,7 +225,7 @@ status_t dipole_init_radiator(dipole_t *dipole)
     mechanical,
     acoustical
   } realm = acoustical;
-    
+
   if ( NULL != dipole->param1 )
     {
       if ( 'm' == dipole->param1[0] )
@@ -270,7 +272,7 @@ status_t dipole_init_port(dipole_t *dipole)
   yana_real_t length;
   yana_real_t actual_length;
   enum { DAMPED, RESONANT } model = DAMPED ;
-  
+
   if ( dipole->param1 )
     {
       surface = dipole_parse_magnitude(dipole->param1);
@@ -349,11 +351,13 @@ yana_complex_t free_air_dir_impedance(yana_real_t f,
 				      yana_real_t sd,
 				      yana_real_t theta)
 {
+  f=f*2;
   yana_real_t w = 2.L * M_PI * f;
   yana_real_t k = w / YANA_C;
   yana_real_t a_2 = sd/M_PI;
   yana_real_t a = sqrt(a_2);
   // beranek p. 254 eq 6.36
+  // Uc=Sd*uc! so you cancel this Sd
   yana_complex_t d = theta == 0.L
     ? 1
     : 2.L * gsl_sf_bessel_J1(k*a*sin(theta)) / (k*a*sin(theta));
@@ -466,7 +470,7 @@ dipole_parse_magnitude_ext(const char *str, char **tmpp)
     len = strlen(tmp);
   if ( NULL != tmpp )
     *tmpp = tmp+len;
-  
+
   if ( NULL == tmp || '\0' == tmp[0] )
     return res;
   else if ( 0 == strcmp(tmp, "f") )
@@ -541,7 +545,7 @@ dipole_parse_magnitude_ext(const char *str, char **tmpp)
   // angle
   else if ( 0 == strcmp(tmp, "°") || 0 == strcasecmp(tmp, "deg") )
     return M_PI * res / 180.;
-  
+
   else
     {
       if ( tmpp )

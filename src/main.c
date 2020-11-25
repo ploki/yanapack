@@ -49,12 +49,8 @@ struct option options[] =
     { "from-frequency", required_argument, NULL, 'f' },
     { "to-frequency", required_argument, NULL, 't' },
     { "steps-per-decade", required_argument, NULL, 'p'},
-    { "from-log-frequency", required_argument, NULL, 'F'},
-    { "to-log-frequency", required_argument, NULL, 'T' },
-    // 0:Dirac distribution, 1:Heaviside distribution, 2: ramp
+    // 0:Dirac distribution, 1:Heaviside distribution, n>=2: 'n'Hz square signal
     { "impulse", required_argument, NULL, 'i'},
-    // smoothing bof... terrible low pass filter
-    { "smooth-output", required_argument, NULL, 'm'},
     {}
   };
 
@@ -120,7 +116,6 @@ int main(int argc, char **argv)
   int steps_per_decade = -1;
   char *netlist_file=NULL;
   char *command=NULL;
-  int smoothing = 0;
 
   make_short_options(short_options);
 
@@ -143,9 +138,6 @@ int main(int argc, char **argv)
 	impulse=1;
         frequence_exponent = strtod(optarg, NULL);
 	break;
-      case 'm':
-        smoothing = strtol(optarg, 0, 0);
-        break;
       case 'f':
 	from = strtol(optarg, 0, 0);
 	break;
@@ -154,12 +146,6 @@ int main(int argc, char **argv)
 	break;
       case 'p':
 	steps_per_decade = strtol(optarg, 0, 0);
-	break;
-      case 'F':
-	from = strtol(optarg, 0, 0);
-	break;
-      case 'T':
-	to = strtol(optarg, 0, 0);
 	break;
       case '?':
       default:
@@ -255,8 +241,7 @@ int main(int argc, char **argv)
   if ( uf_ctx )
     {
       uforth_output_t *output;
-      status = uforth_execute(uf_ctx, sc, simulation, NULL, NULL,
-                              smoothing, impulse, &output);
+      status = uforth_execute(uf_ctx, sc, simulation, NULL, NULL, impulse, &output);
       if (SUCCESS == status) {
         if (impulse) {
           result_impulse(sc, output, frequence_exponent);
@@ -303,8 +288,7 @@ int main(int argc, char **argv)
 	      if ( SUCCESS == status )
 		{
                   uforth_output_t *output;
-		  uforth_execute(uf_ctx, sc, simulation, NULL, NULL,
-                                 smoothing, impulse, &output);
+		  uforth_execute(uf_ctx, sc, simulation, NULL, NULL, impulse, &output);
                   if (impulse) {
                     result_impulse(sc, output, frequence_exponent);
                   }

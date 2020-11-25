@@ -222,14 +222,15 @@ void result_impulse(simulation_context_t *sc,
       result[i] = uforth_output_value(output, i, idx);
     }
 
-    apply_window_function(result, n_samples, 1, n_samples/2, 8);
+    //surprisingly, does not seem to have much effect on frequency folding
+    //apply_window_function(result, n_samples, 1, n_samples/2, 4);
 
     for (int i = 0; i < n_samples/2; ++i)
       {
         if (fe < 2) {
           yana_complex_t
-            w_even = I*simulation_context_get_f(sc, i * 2 + 0),
-            w_odd  = I*simulation_context_get_f(sc, i * 2 + 1),
+            w_even = 1./(I*simulation_context_get_f(sc, i * 2 + 0)),
+            w_odd  = 1./(I*simulation_context_get_f(sc, i * 2 + 1)),
             f_even = cpow(w_even, abs(fe)),
             f_odd = cpow(w_odd, abs(fe)),
             even = result[i * 2]     * f_even,

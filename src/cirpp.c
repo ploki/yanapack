@@ -223,7 +223,7 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
       status = uforth_compile_command(buf, 1000, &uf_ctx);
       if ( SUCCESS != status )
 	  goto end;
-      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, NULL, 0, -1, NULL);
+      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, NULL, -1, NULL);
       if ( SUCCESS != status )
 	goto end;
       uforth_free(uf_ctx);
@@ -261,7 +261,7 @@ cc_expand(subckt_heap_t *subckt_heap, const char *line_const, FILE *output)
       if ( SUCCESS != status )
 	  goto end;
       yana_complex_t result;
-      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, &result, 0, -1, NULL);
+      status = uforth_execute(uf_ctx, NULL, NULL, uf_heap, &result, -1, NULL);
       if ( SUCCESS != status )
 	goto end;
       fprintf(local, " %1.12g ", cabs(result));

@@ -53,7 +53,6 @@ uforth_execute(uforth_context_t *uf_ctx,
 	       simulation_t *simulation,
 	       uforth_heap_t *heap,
 	       yana_complex_t *resultp,
-               int smoothing,
                int impulse,
                uforth_output_t **outputp);
 

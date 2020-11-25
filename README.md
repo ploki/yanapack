@@ -7,10 +7,6 @@ This nodal analysis software is dedicated to electro-mechanical-acoustical equiv
 
 At this time, only linear analysis in the frequency domain is supported. A simple Gauss-Jordan algorithm is used and no special attention is taken on conditioning the system of equations.
 
-It is still work in progress.
-
-This library will be used in a improved version of the loudspeaker graphing calculator ( https://github.com/ploki/Loudspeaker/ )
-
 ### References
 
 The science behind this simulation software comes from:
@@ -66,7 +62,7 @@ $ make
 $ sudo make install
 $ yanapack -h
 Yanapack: Yet Another Nodal Analysis PACKage
-usage: yanapack -h -n ARG -c ARG -s -f ARG -t ARG -p ARG -F ARG -T ARG
+usage: ./yanapack -h -n ARG -c ARG -s -f ARG -t ARG -p ARG -i ARG
 	-h	--help
 	-n	--netlist	ARG
 	-c	--command	ARG
@@ -74,9 +70,7 @@ usage: yanapack -h -n ARG -c ARG -s -f ARG -t ARG -p ARG -F ARG -T ARG
 	-f	--from-frequency	ARG
 	-t	--to-frequency	ARG
 	-p	--steps-per-decade	ARG
-	-F	--from-log-frequency	ARG
-	-T	--to-log-frequency	ARG
-
+	-i	--impulse	ARG
 ```
 
 Simulation example
@@ -104,7 +98,7 @@ and performs the simulation from 10^1 to 10^5 Hertz with 3 steps per decades.
 The result of the simulation is dumped to the standard output
 
 It is also possible to spawn a shell with the simulation just run and issue custom
-commands to control the output
+formulae to control the output
 
 ``` bash
 $ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir -s
@@ -131,14 +125,41 @@ Output is controlled using a forth like language. Here, the output is composed o
 
 [Splifftown4000XL circuit file](https://github.com/ploki/yanapack/blob/master/circuits/Splifftown4000XL.cir)
 
+Domain of simulation
+--------------------
+This software provides a limited support for time domain simulation because of the
+pistonic radiator which does not have a proper representation in this domain.
+Hence, all computations are performed in the frequency domain. Despite of this, it is still
+possible to compute an response in the time domain for a given circtuit.
+
+The selection between the frequency and time domains is specified by the use of either `-p` or `-i`
+on the command line.
+
+#### Frequency domain
+
+When the `-p` (steps per decade) parameter is provided (or neither of `-p` or `-i` is provided), the
+simulation result is shown in the frequency domain. In this case the arguments for the
+options `-f` and `-t` are interpreted as the base 10 logarithm of the lower and upper bounds of
+the frequencies of interest.
+
+#### Time domain
+
+When the `-i` parameter is used, the provided argument is intepreted as follow:
+ - 0: Compute an impulse response
+ - 1: Compute a step response
+ - n>1: Compute the response for a `n`Hz square wave as input signal.
+
+In this mode, the argument of the `-f` parameter must be set to `0` and the argument of the `-t`
+parameter to twice the Nyquist frequency (e.g. 40kHz for audo applications).
+
 Simulation files
 ----------------
 
 This software implements a small subset of what ngspice and gnucap are capable of.
 
-To start a simulation, first you need a netlist that describes the circuit, here comes the spice-like stuff. Then, you need to ask yanapack to output what you are looking for, here comes the forth-like stuff.
+To start a simulation, first you need a netlist that describes the circuit in a Spice-like language. Then, you need to ask yanapack to output what you are looking for using a forth-like language.
 
-### The spice-like stuff
+### Netlist description language
 
 The netlist is a list of dipole. For each dipole, you specify the magnitude, the connections with each others and other dipole specific parameters.
 
@@ -148,38 +169,40 @@ The dipoles defined are given a magnitude as a function of s where s = j&omega;.
 
 #### Resistor
 ```
-Rxyz x y r
+Rabc x y r
 ```
- - xyz is the resistor's name
+ - abc is the resistor's name
  - x and y are the interconnection nodes
  - r is the value of the resistor in ohm
 
 #### Capacitor
 ```
-Cxyz x y c
+Cabc x y c
 ```
- - xyz is the capacitor's name
+ - abc is the capacitor's name
  - x and y are the interconnection nodes
- - c is the value of the capacitor in farad. the impedance is defined as z = 1/(s*c)
+ - c is the value of the capacitor in farad. The impedance is defined as z = 1/(s*c)
 
 #### Inductor
 ```
-Lxyz x y c r
+Labc x y l r
 ```
- - xyz is the inductor's name
+ - abc is the inductor's name
  - x and y are the interconnection nodes
+ - l is the value of the inductor in henry. The impedance is defined as z = s*l
  - r is the series resistor of the actual inductor (0 if ommited)
- - l is the value of the inductor in henry. the impedance is defined as z = s*l
 
 #### Tension source
 ```
-Exyz x y v
-Vxyz x y v
+Eabc x y v
+Vabc x y v
 ```
  - E and V are possible prefix for tension sources
- - xyz is the tension source's name
+ - abc is the tension source's name
  - x and y are the interconnection nodes
  - v is the electric potential between x and y (in than order) and is constant at all frequencies
+
+Note that output impedance is null.
 
 #### Current source
 Current source is not an elementary dipole type in yanapack but can be modeled with a tension source and a gyrator using a sub circuit.
@@ -191,19 +214,19 @@ Rlinkage 0 v2 1T
 Grcurrent_source v1 v2 1
 .ends
 
-Xxyz x y current_source param: {i TO current}
+Xabc x y current_source param: {i TO current}
 ```
- - xyz is the current source's name
+ - abc is the current source's name
  - x and y are the interconnection nodes
  - i is the electric current crossing the dipole and is constant at all frequencies
 
 #### Ideal Transformer
 ```
-Tlxyz x y i
-Trxyz w z j
+Tlabc x y i
+Trabc w z j
 ```
  - l and r specify which side of the transformer is defined. Both sides must be defined.
- - xyz is the transformer's name
+ - abc is the transformer's name
  - x and y are the interconnection nodes of the left side of the transformer
  - w and z are the interconnection nodes of the right side of the transformer
  - i and j are the coefficient that represent the windings coupling
@@ -211,38 +234,37 @@ Trxyz w z j
 #### Gyrator
 A gyrator is an hypothetical non reciprocal linear element that inverts the current-voltage characteristic of the circuit between the sides of the device. It is used to pass from impedance to admittance analogy (and the reverse of course)
 ```
-Glxyz x y i
-Grxyz w z j
+Glabc x y i
+Grabc w z j
 ```
  - l and r specify which side of the gyrator is defined. Both sides must be defined.
- - xyz is the gyrator's name
+ - abc is the gyrator's name
  - x and y are the interconnection nodes of the left side of the gyrator
  - w and z are the interconnection nodes of the right side of the gyrator
  - i and j are the coefficient that represent the gyration resistance
 
-
 #### Pistonic radiator
 ```
-Zxyz x y surface [ma][ai]
+Zabc x y surface [ma][ai]
 ```
- - xyz is the radiator's name
+ - abc is the radiator's name
  - x and y are the interconnection nodes of the radiator
  - surface is the surface of the circular piston in square meters
- - [ma][ai] are two charaters to select the domain and the analogy
-   * the first set is for the domain selection. 'm' stands for mechanical and 'a' stands for acoustic
-   * the second set is for the analogy selection. 'a' stands for admittance and 'i' stands for impedance
+ - [ma][ai] are two charaters to select which domain and analogy the dipole conforms to
+   * the first character is for the domain selection. 'm' stands for mechanical domain and 'a' stands for acoustic domain
+   * the second character is for the analogy selection. 'a' stands for admittance and 'i' stands for impedance
 
-The Piston radiation impedance may be found in "Electroacoustic modelling of the subwoofer enclosures" chapter 2.5
+The Piston radiation impedance description may be found in "Electroacoustic modelling of the subwoofer enclosures" chapter 2.5
 
-#### Port impedance
+#### Port (Helmholtz resonator) impedance
 ```
-Pxyz x y length surface [kK][kK][dr]
+Pabc x y length surface [kK][kK][dr]
 ```
- - xyz is the port's name
+ - abc is the port's name
  - x and y are the interconnection nodes of the port
  - surface is the surface of the port in square meters
  - length is the length of the port in meters
- - [kK][kK][dr] are three characters to select the end correction factors and the exactness of the simulation
+ - [kK][kK][dr] are three characters used to select the end correction factors and the exactness of the simulation
    * k stands for free air termination
    * K stands for flanged termination
    * d stands for damped simulation (kind of simplified)
@@ -252,15 +274,15 @@ The Port inertance impedance may be found in "beranek" chapter 4 eq. 4.1, 4.22 a
 
 #### Box impedance
 ```
-Bxyz x y volume
+Babc x y volume
 ```
- - xyz is the box's name
+ - abc is the box's name
  - x and y are the interconnection nodes of the box
  - volume is the volume of the box in cubic meters. The box impedance is defined as z = 1 / (s* volume/( &rho; * c^2 ) )
 
 #### Semi impedance
 ```
-Kxyz x y magnitude pow_of_w [cri][ia]
+Kabc x y magnitude pow_of_w [cri][ia]
 
 * example
 Ke x y 143m .5 ci
@@ -268,15 +290,15 @@ Kams w z 2290 1 ra
 ```
 The semi impedance dipole is useful to model specific dipoles found in frequency-dependent damping modeling of loudspeakers (Thorborg, Knud; Tinggaard, Carsten; Agerkvist, Finn; Futtrup, Claus; "Frequency Dependence of Damping and Compliance in Loudspeaker Suspensions"; JAES Volume 58 Issue 6 pp. 472-486; June 2010)
 
- - xyz is the semi impedance name
+ - abc is the semi impedance name
  - x and y are the interconnection nodes of the dipole
  - magnitude is the nominal value of the dipole
  - pow_of_w; specifies to which power the angular velocity (&omega;) is elevated
- - [cri] permit to select the form of the number to compute
+ - [cri] permits to select the form of the number to compute
   - c gives z = magnitude * &omega;^pow_of_w * ( 1 + I )
   - r gives z = magnitude * &omega;^pow_of_w
   - i gives z = magnitude * &omega;^pow_of_w * I
- - [ia] permit to select the analogy of the dipole
+ - [ia] permits to select the analogy of the dipole (e.g. impedance/admitance)
   - i sets the dipole value to z
   - a sets the dipole value to 1 / z
 
@@ -285,17 +307,18 @@ In the examples,
  - Kams defines a conductance varying with frequency ( z = 1 / ( 2290 * &omega; ) )
 
 #### Free air impedance
+(to be removed)
 Completely useless, it pollutes the circuit impedance and hence the tension source load
 
-### The Forth-like stuff
+### The Forth-like formula language
 
 The embedded Forth-like interpreter is used in different ways inside the circuit file or during the interactive sessions (with the -s parameter)
  - To display simulation results. The script is embedded in the circuit file and all lines starting with ". " (a dot and a space) are considered Forth code
- - To provide parameters to custom sub circuits. after the "param:" keyword inside a block delimited by curly brackets
+ - To provide parameters to custom sub circuits. After the "param:" keyword inside a block delimited by curly brackets
  - To push values inside the custom sub circuit being instanciated
  - To display simulation results from an interactive session. In this case lines must not start with a dot.
 
-#### Data type
+#### Data types
 
 There is only one data type, complex numbers.
 
@@ -366,7 +389,7 @@ The comparison is performed on the magnitude of the values in TOS and NOS.
  - __LEAVE__: jump to the word following the next REPEAT/UNTIL/AGAIN
  - __BREAK__: LEAVE alias
 
-#### Mathematical and physics constant words
+#### Mathematical and physical constant words
  - __PI__: push the value of PI
  - __\_RHO__: push the value of the density of the ambiant air
  - __\_C__: push the value of the speed of sound
@@ -398,7 +421,7 @@ In both Forth context or in the netlist definition, only real floating point num
  - .56
  - .68e-3
 
-In addition, there are several suffixes to perform basic conversion or add unit prefixes from the metric system.
+In addition, there are several suffixes to perform basic conversions and scaling.
  - __f__: * 10^-15
  - __p__: * 10^-12
  - __n__: * 10^-9

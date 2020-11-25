@@ -872,7 +872,6 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 		    uforth_heap_t *heap,
 		    yana_complex_t *resultp,
 		    int i,
-                    int smoothing,
                     int impulse,
                     uforth_output_t *output)
 {
@@ -1311,28 +1310,6 @@ uforth_execute_step(uforth_context_t *uf_ctx,
 		    goto loop_exit;
 		  }
                 yana_complex_t value = sim_array[i];
-                if (smoothing) {
-                  if (0) {
-                    int j;
-                    int b = i - smoothing;
-                    if (b < 0) b = 0;
-                    for (j = b; j < i ; ++j) {
-                      value += sim_array[j];
-                    }
-                    value /= (i - b);
-                  } else {
-                    int j;
-                    int b = i + smoothing;
-                    if (b >= simulation_context_get_n_samples(sc)) b = simulation_context_get_n_samples(sc);
-                    int n = 1;
-                    for (j = i + 1; j <= b ; ++j) {
-                      ++n;
-                      //TODO: invalid read here
-                      value += sim_array[j];
-                    }
-                    value /= n;
-                  }
-                }
 		PUSH_COMPLEX("sim", value);
 	      }
 	  }
@@ -1400,7 +1377,6 @@ uforth_execute(uforth_context_t *uf_ctx,
 	       simulation_t *simulation,
 	       uforth_heap_t *heap,
 	       yana_complex_t *resultp,
-               int smoothing,
                int impulse,
                uforth_output_t **outputp)
 {
@@ -1414,8 +1390,7 @@ uforth_execute(uforth_context_t *uf_ctx,
     s = simulation_context_get_n_samples(sc);
   for ( i = 0 ; i < s ; ++i )
     {
-      status = uforth_execute_step(uf_ctx, sc, simulation, heap, resultp, i,
-                                   smoothing, impulse, output);
+      status = uforth_execute_step(uf_ctx, sc, simulation, heap, resultp, i, impulse, output);
       if ( SUCCESS != status )
 	{
 	  ERROR("Execution failed");

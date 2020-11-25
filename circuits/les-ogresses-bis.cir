@@ -457,10 +457,10 @@ Rtweeter_linage aGND tGND 1p
 . SWvolume_velocity MWvolume_velocity Tvolume_velocity + + ARG DEG 10 / .
 . ELSE
 *** Step response
-. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT  response_correction_SW DIRIMP SWvolume_velocity 2 * * DUP . DUP REAL .
-. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT  response_correction_MW DIRIMP MWvolume_velocity 2 * * DUP . DUP REAL .
-. SdT distance avanceT - 0° DIRIMP Tvolume_velocity * DUP .  DUP REAL .
-. + +  DUP . REAL .
+. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT  response_correction_SW DIRIMP SWvolume_velocity 2 * * DUP .
+. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT  response_correction_MW DIRIMP MWvolume_velocity 2 * * DUP .
+. SdT distance avanceT - 0° DIRIMP Tvolume_velocity * DUP .
+. + + .
 . THEN
 
 ** diff phase acoustique electrique

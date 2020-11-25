@@ -8,13 +8,16 @@
 Llp1 in  out  2.2m 0.62
 Clp1 out com  12u
 Clp2 out com  12u
+
 * imp comp *
 Cnw  out 2 1.2u
 Rnw  2 com 6.8
 .ends
 
 .subckt high_pass in out com
-Ratt in 1 5.6
+!Ratt in 1 5.6
+! dans les faits
+Ratt in 1 10
 Chp1 1 2 6.8u
 Lhp 2 com .2m .10
 Chp2  2 out 22u

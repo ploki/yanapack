@@ -6,7 +6,7 @@
 Re'                 in+    0   {Re'}
 Leb                   0    1   {Leb}
 Le                    1    2   {Le}
-Ke                    1    2   {Ke} .5 ci
+Ke                    1    2   {Ke} .5 si
 Rss                   1    2   {Rss}
 Glmotor              2  in-   {1 Bl /}
 Rmotor_linkage     in-    g   1T
@@ -23,4 +23,3 @@ Zfront               f  pd+   {Sd} ai
 Zrear                r  pd-   {Sd} ai
 * drop: Pa, flow: m³/s
 .ends
-

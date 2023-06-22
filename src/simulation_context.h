@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -33,6 +33,7 @@
 
 typedef struct simulation_context_t
 {
+  int impulse;
   int log_hz_min;
   int log_hz_max;
   int samples_per_decade;
@@ -41,7 +42,7 @@ typedef struct simulation_context_t
 
 void simulation_context_free(simulation_context_t *sc);
 simulation_context_t *
-simulation_context_new(int log_hz_min, int log_hz_max, int samples_per_decade);
+simulation_context_new(int impulse, int log_hz_min, int log_hz_max, int samples_per_decade);
 int simulation_context_get_n_samples(simulation_context_t *sc);
 yana_real_t simulation_context_get_f(simulation_context_t *sc, int i);
 

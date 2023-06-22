@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
 
 #define DISABLE_ISFINITE 1
 
-//#define USE_OMP
+#define USE_OMP
 
 #ifdef DISABLE_ISFINITE
 # ifdef isfinite
@@ -78,7 +78,7 @@ static inline yana_complex_t c_let(yana_complex_t l)
   assert( isfinite(cimag(l)) );
   return l;
 }
-  
+
 #else
 #define c_sub(l,r) ((l)-(r))
 #define c_div(l,r) ((l)/(r))
@@ -144,13 +144,13 @@ void simulation_solve(simulation_t *simulation)
   m = simulation->n_vars;
   int n = m+1;
   s = simulation_context_get_n_samples(simulation->nodelist->netlist->sc);
-  
+
   for ( k = 0 ; k < m ; ++k )
     {
       //pivot is col k
       //find a line with the maximum k
       i_max = simulation_max(simulation, k,m);
-      
+
       if ( cell_is_zero(simulation, &simulation->cells[i_max][k]) )
 	{
 	  fprintf(stderr,"singular matrix, zero found @ row %d col %d (mean = %.1f)\n", i_max, k,
@@ -240,8 +240,8 @@ void simulation_solve(simulation_t *simulation)
 	  for ( x = 0 ; x < s ; ++x )
 	    {
 	      //assert( simulation->cells[k][k].state != CELL_ZERO && !cell_is_zero(simulation, &simulation->cells[k][k]));
-	      
-	      simulation->cells[k][j].values[x] = 
+
+	      simulation->cells[k][j].values[x] =
 		c_let(
 		      c_div(simulation->cells[k][j].values[x], simulation->cells[k][k].values[x] ));
 	      /*
@@ -274,7 +274,7 @@ void simulation_solve(simulation_t *simulation)
 	  assert( i != k );
 	  for ( j = k + 1 ; j < m ; ++ j )
 	    assert( simulation->cells[i][j].state == CELL_ZERO );
-	  
+
 	  // => Fir = Fir - Fik x Fkr
 	  // => Fi,k  = 0
 	  int result_col = n - 1;
@@ -285,7 +285,7 @@ void simulation_solve(simulation_t *simulation)
 		c_sub(simulation->cells[i][result_col].values[x],
 		      c_mul(simulation->cells[i][k].values[x], simulation->cells[k][result_col].values[x])));
 	      /*
-	      simulation->cells[i][j].values[x] = 
+	      simulation->cells[i][j].values[x] =
 		simulation->cells[i][j].values[x]
 		- simulation->cells[i][k].values[x] * simulation->cells[k][j].values[x];
 	      */
@@ -299,7 +299,7 @@ void simulation_solve(simulation_t *simulation)
 	}
 
     }
-  
+
   //sanity check
   assert( m == simulation->n_vars );
   assert( n == simulation->n_vars+1 );
@@ -310,5 +310,3 @@ void simulation_solve(simulation_t *simulation)
       else
 	assert(simulation->cells[i][j].state == CELL_ZERO );
 }
-
-

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2015, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -32,10 +32,12 @@
 #ifndef __YANAPACK_UFORTH_H__
 #define __YANAPACK_UFORTH_H__
 
-#include <yanapack.h>
-
 typedef struct uforth_context uforth_context_t;
 typedef struct uforth_heap uforth_heap_t;
+typedef struct uforth_output uforth_output_t;
+
+#include <yanapack.h>
+#include <stdbool.h>
 
 status_t uforth_compile(const char *buf, int stack_size,
 			uforth_context_t **uf_ctxp);
@@ -50,12 +52,37 @@ uforth_execute(uforth_context_t *uf_ctx,
 	       simulation_context_t *sc,
 	       simulation_t *simulation,
 	       uforth_heap_t *heap,
-	       yana_complex_t *resultp);
+	       yana_complex_t *resultp,
+               int impulse,
+               uforth_output_t **outputp);
 
 uforth_heap_t *
 uforth_heap_new(void);
 void
 uforth_heap_free(uforth_heap_t *heap);
 
+uforth_output_t *
+uforth_output_new(void);
+
+void
+uforth_output_free(uforth_output_t *output);
+
+yana_complex_t
+uforth_output_value(uforth_output_t *output, int line, int column);
+
+void
+uforth_output_set(uforth_output_t *output, int line, int column, yana_complex_t value);
+
+int
+uforth_output_columns(uforth_output_t *output);
+
+int
+uforth_output_lines(uforth_output_t *output);
+
+void
+uforth_output_print(uforth_output_t *output);
+
+bool
+uforth_output_column_is_dB(uforth_output_t *output, int column);
 
 #endif /* __YANAPACK_UFORTH_H__ */

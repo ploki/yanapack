@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -57,6 +57,6 @@ typedef struct netlist_t
 
 void netlist_free(netlist_t *netlist);
 status_t netlist_new(simulation_context_t *sc, const char *orig_netlist_str, netlist_t **netlistp);
-void netlist_dump(netlist_t *netlist);
+void netlist_dump(netlist_t *netlist, const char* filter);
 
 #endif

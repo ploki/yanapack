@@ -1,0 +1,556 @@
+* Les Ogresses
+
+** Header
+!.include circuits/driver.cir
+!.include circuits/drivers/seas.cir
+.include circuits/drivers/scan-speak.cir
+.include circuits/closed_cab.cir
+!.include circuits/filter.cir
+
+!for reference
+.subckt GW-6028 in+ in- pd+ pd-
+Xdriver in+ in- pd+ pd- driver param: { .5m TO Le 7.3 TO Re 6.1 TO Bl \
+                                        1.66845 TO Rms 0.4692m TO Cms 16m TO Mms \
+			                136.35cm² TO Sd }
+.ends
+
+!Qes: 0.456
+!Qms: 1.145
+!Qts: .326
+.subckt T35C-002 in+ in- pd+ pd-
+Xdriver in+ in- pd+ pd- driver param: { \
+                                   0.06m TO Le \
+                                   4.6 TO Re \
+                                   4.3 TO Bl \
+                                   1.6 TO Rms \
+                                   0.14m TO Cms \
+                                   0.47m TO Mms \
+                                   11.9cm² TO Sd }
+.ends
+
+.subckt LAB12 in+ in- pd+ pd-
+Xdriver in+ in- pd+ pd- driver param: { \
+                                   1.48m TO Le \
+                                   4.29 TO Re \
+                                   15 TO Bl \
+                                   1.52 TO Rms \
+                                   0.35m TO Cms \
+                                   146m TO Mms \
+                                   506.7cm² TO Sd }
+.ends
+
+** Power amplifier. (4\Omega load)
+
+. 110m TO R_TW
+. 177m TO R_MW
+. 255m TO R_SW
+
+
+!! geometry
+!.  0m TO SEP_TW_MW
+!.  0m TO SEP_MW_SW
+!.  0m TO avanceT
+!.  3m TO avanceM
+!. 21m TO avanceW
+
+!.  1cm TO SEP_TW_MW
+!.  5cm TO SEP_MW_SW
+!.   0m TO avanceT
+!.   4m TO avanceM
+!.  29m TO avanceW
+
+!good
+.  1cm TO SEP_TW_MW
+. 10cm TO SEP_MW_SW
+.   0m TO avanceT
+.   4m TO avanceM
+.  37m TO avanceW
+
+
+
+! on va dire, profondeur relative du foyer
+! TW: 0m
+! MW: 5m
+! SW: 10m
+! avance corrigee
+! TW:  0m + 0m
+! MW:  5m + 4m = 9mm
+! SW: 10m + 37m = 47mm
+
+. R_TW 2 / SEP_TW_MW R_MW 2 / + + TO separation_MT
+. separation_MT SEP_MW_SW R_SW 2 / + + TO separation_ST
+
+. 0° TO response_correction_SW
+. 0° TO response_correction_MW
+
+
+
+!Max: 17.867V (106W/3\Omega, 80W/4\Omega) à cause de l'excursion du tweeter
+
+. 3 TO distance
+!! 2.83 distance * TO Eg
+!Eg oeg 0 11.314
+Eg oeg 0 8.49
+!Eg oeg 0 5.66
+!Eg oeg 0 2.83
+
+
+!Eg 0 oeg 11.314
+!Eg oeg 0 17.867
+!Eg oeg 0 28.3
+
+! 10.5\Omega/km - 0.4uH / m - 10m
+RLwire oeg 1 4u .105
+
+** driver vars
+
+. 330cm² TO SdSW
+!. 220cm² TO SdSW
+. 145cm² TO SdMW
+. 11.9cm² TO SdT
+
+. IZfront:Xdriver:XSW1
+!                     factory response correction
+!.                     F .3 POW * 5.66 /
+.                    TO SWvolume_velocity
+. IZfront:Xdriver:XMW1
+!                     factory response correction
+!.                     F .3 POW * 5.66 /
+.                     TO MWvolume_velocity
+. IZfront:Xdriver:XT
+!.                    2 SQRT *
+.                     TO Tvolume_velocity
+
+** Entry points
+
+RstopSW 1 lsw 1p
+RstopMW 1 lmw 1p
+RstopT  1 hf 2.7
+
+
+** Woofer impedance flattening
+Rw1 sw+ sw2 4
+Cw1 sw2 0 26.44u
+
+** Woofer resonance notch
+
+*** 25W
+! in 160L
+! F0: 38Hz
+! Zmax: 15.3
+! \Delta{}F: 46-31
+! Q: 2.53
+
+Rwn sw+ sw3 4
+Lwn sw3 sw4 17.33m .94
+Cwn sw4 0  1000u
+
+!! TODO
+!! a faire dans 200+L
+
+
+*** 21W
+! in 64L
+! F0: 44Hz
+! Zmax: 18.54
+! \Delta{}F: 52-37
+! Q: 2.93
+
+!!Rwn sw+ sw3 5
+!Rwn sw+ sw3 3.91
+!Lwn sw3 sw4 13m .7
+!Cwn sw4 0  1000u
+
+*** more 18W/8545-01 as SW in 56L
+!bof, autant rester a 3 hp et augmenter le volume
+!Rwn sw+ sw3 3.91
+!Lwn sw3 sw4 10m .7
+!Cwn sw4 0  1000u
+
+
+** MidWoofer resonance notch @2.6kHz
+*** un subckt
+.subckt parallel_notch in out
+! F0, Q, R
+! Q = R \radic(C/L)
+! \omega0 = 1/\radic(LC)
+! L = R/(Q\omega0)
+! C = Q/(\omega0R)
+Rn in out  {R}
+Ln in out  {R Q 2 PI F0 * * * /}
+Cn in out  {Q 2 PI F0 R * * * /}
+.ends
+*** le notch
+!Xwn2k6 mw+ actual_mw+ parallel_notch param: { 2.6k TO F0 3.1 TO R .75 TO Q }
+!5W @20V
+Rwn2k6	mw+	actual_mw+	4.7
+Lwn2k6	mw+	actual_mw+	.25m 0.047
+Cwn2k6	mw+	actual_mw+	15u
+!Rwnshunt mw+ actual_mw+ 1p
+
+** MidWoofer Impedance flattening
+
+!5.5W @28V
+RMWnotch mw+ mwn  8.2
+CMWnotch mwn 0    12u
+
+** Midrange resonance notch
+
+*** in 24L
+! F0: 61.5
+! Zmax: 12.66
+! \Delta{}F: 83-43.6
+! Q: 1.561
+!Rmn actual_mw+ mn1 6.33
+!Rmn actual_mw+ mn1 5.1
+!Lmn mn1 mn2 10.49m
+!Cmn mn2 0 638.14u
+
+*** in 20L au pif
+! F0: 61.5
+! Zmax: 12.66
+! \Delta{}F: 83-43.6
+! Q: 1.561
+!!Rmn actual_mw+ mn1 6.33
+!Rmn actual_mw+ mn1 5.1
+!Lmn mn1 mn2 10.m
+!Cmn mn2 0 600.14u
+
+*** in 12L
+! F0: 82.5
+! Zmax: 11
+! \Delta{}F: 108-59
+! Q: 1.684
+Rmn actual_mw+ mn1 5.1
+Lmn mn1 mn2 12m 0.43
+Cmn mn2 0 310u
+
+** Tweeter resonance notch
+*** reading
+!F0: 557
+!Zmax: 15.87
+!\Delta{}F: 1234-232
+!Q: .555
+*** circuit
+!18.5W@28.3V
+R3 t+ t2 7.4
+L3 t2 t3 1m
+C3 t3  0 80.u
+
+** Tweeter Impedance flattening
+
+R4 t+ t5 5
+C5 t5 0  2.83u
+
+** Drivers
+
+!Les ogresses 25W/8565 2x100L (f_{-6}=25Hz)
+XSW1	0		sw+	swGND	psw-	25W/8565-00
+XSW2	0		sw+	swGND	psw-	25W/8565-00
+
+!Mammoth LAB12 2x50L (f_{-6}=28Hz)
+!ou Peerless NE315W-08
+!ou Dayton RSS315HFA-8
+!XSW1	0		sw+	swGND	psw-	LAB12
+!XSW2	0		sw+	swGND	psw-	LAB12
+
+!California Shake 21W/8555 2x32L (f_{-6}=34Hz)
+!XSW1	0		sw+	swGND	psw-	21W/8555-10
+!XSW2	0		sw+	swGND	psw-	21W/8555-10
+
+!Pas possible 18W/8545, trop d'excursion... 2x28L (f_{-6}=37Hz)
+!XSW1	0		sw+	swGND	psw-	18W/8545-01
+!XSW2	0		sw+	swGND	psw-	18W/8545-01
+
+!California Shake [12L f_{-6}=50Hz] [20L f_{-6}=42Hz] stop a 12mm d'exc
+! pour memoire [30L f_{-6}=37Hz Ex: 16mm] [40L 34Hz] [56L f_{-6}=32Hz]
+XMW1	actual_mw+	0	aGND	pd-	18W/8545-01
+XMW2	actual_mw+	0	aGND	pd-	18W/8545-01
+XT      0   		t+		tGND	tGND	T35C-002
+
+** Crossover
+*** passband sub
+! avec 6620: flat, xo@1kHz et 14dB de diff
+!diff@2.5kHZ: 13.8dB
+
+.subckt pass_band in out
+! R (of load), Fl, Fh
+L in 1  { Fl Fh * SQRT TO F0 \
+          F0 Fh Fl - / 1 NEG POW TO Q \
+          2 PI F0 * * TO w0 \
+          R Q w0 * / TO Ll \
+          Q R w0 * / TO C \
+          Ll }
+C 1 out {C}
+.ends
+
+*** Circuit
+
+
+**** SW \rarr MW
+***** SW Low Pass
+! 32W/8878T01: f_{-6}=27Hz / 130L
+! 25W/8565: f_{-6}=25Hz / 200L
+! 21W/8555: f_{-6}=34Hz / 64L
+! 18W/8545: f_{-6}=37Hz / 56L
+! LAB12 too
+!Llsw lsw sw+ 10m .9 !air core
+!Cpull_down_sw sw+ 0 500u
+
+!Llsw lsw sw+ 8m .8 !air core
+!Cpull_down_sw sw+ 0 500u
+
+Llsw lsw sw+ 7m .8 !air core
+Cpull_down_sw sw+ 0 500u
+
+!23W SW \rarr MW (f_{-6dB}=32Hz / 40L)
+!Llsw lsw sw+ 4m .47 !air core
+!Cpull_down_sw sw+ 0 800u
+
+***** MW High Pass
+
+!Clf lmw lmwm 350.01u
+Clf lmw lmwm 350.01u
+
+**** MW \rarr TW
+
+***** MW Low Pass
+!Llf lmwm mw+ .9m .2
+!Cpull_down_midrange mw+ 0 4u
+
+!ORIGINAL
+Llf lmwm mw+ .78m .2
+Cpull_down_midrange mw+ 0 5u
+
+!Llf lmwm mw+ .68m .2
+!Cpull_down_midrange mw+ 0 7u
+
+
+!Llf lmwm mw+ .68m .2
+!Cpull_down_midrange mw+ 0 7u
+!Llf lmwm mw+ .50m .2
+!Cpull_down_midrange mw+ 0 12u
+
+***** TW High Pass
+
+Chf hf t+ 11.47u
+
+
+** Box
+
+!! attention, les param T-S sont pour deux hp //
+XMWBox pd- aGND closed_cab param: { 12L TO Vb 50 TO Qb 7 TO Ql \
+                                 .39m TO Le 5.7 TO Re 8.4 TO Bl \
+		  	         1.8 TO Rms 1.15m TO Cms 36m TO Mms \
+			         290cm² TO Sd }
+
+!! attention, les param T-S sont pour deux hp //
+XSWBox psw- swGND closed_cab param: { 168L TO Vb 50 TO Qb 7 TO Ql \
+                                 .2m TO Le 2.75 TO Re 8.2 TO Bl \
+                                      .5 TO Rms 2.94m TO Cms 86m TO Mms \
+			              330cm² TO Sd }
+
+Rbox_linkage aGND swGND 1p
+Rtweeter_linage aGND tGND 1p
+
+!blague
+!Rmeme_boite pd- psw- 1p
+
+* Output
+** help for gnuplot
+! set ytics 110,-5,-110
+! set logscale x
+! plot [20:20000] [-10:110] 'a26.plot' using 1:2 title '0deg' with lines, 'a26.plot' using 1:3 title '30deg' with lines, 'a26.plot' using 1:4 title '60deg' with lines, 'a26.plot' using 1:5 title 'Bass' with lines, 'a26.plot' using 1:6 title 'MidRange' with lines, 'a26.plot' using 1:7 title 'Treble' with lines, 'a26.plot' using 1:8 title 'Aux1' with lines, 'a26.plot' using 1:9 title 'Aux2' with lines, 'a26.plot' using 1:10 title 'Aux3' with lines, 'a26.plot' using 1:11 title 'Aux4' with lines
+** current frequency
+
+!. 1 F  / .
+. F .
+
+** [#A] Global response and directivity
+. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT response_correction_SW DIRIMP SWvolume_velocity 2 * *
+. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT response_correction_MW DIRIMP MWvolume_velocity 2 * *
+. SdT distance avanceT - 0° DIRIMP Tvolume_velocity *
+. + + DBSPL .
+!. + + .
+!. + + .5 NEG POW DBSPL .
+
+. IMPULSE 0 == IF
+
+. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT 30° DIRIMP SWvolume_velocity 2 * *
+. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT 30° DIRIMP MWvolume_velocity 2 * *
+. SdT distance avanceT - 30° DIRIMP Tvolume_velocity *
+. + + DBSPL .
+!. + + .
+!. + + .5 NEG POW DBSPL .
+
+. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT  60° DIRIMP SWvolume_velocity 2 * *
+. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT  60° DIRIMP MWvolume_velocity 2 * *
+. SdT distance avanceT - 60° DIRIMP Tvolume_velocity *
+. + + DBSPL .
+!. + + .
+!. + + .5 NEG POW DBSPL .
+
+. THEN
+
+** [#B] Individual freq response
+
+. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT  response_correction_SW DIRIMP SWvolume_velocity 2 * * DBSPL .
+. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT  response_correction_MW DIRIMP MWvolume_velocity 2 * * DBSPL .
+. SdT distance avanceT - 0° DIRIMP Tvolume_velocity * DBSPL .
+
+** radiation pressure
+
+!. vf:Xdriver:XW1 vf:Xdriver:XW1 + vaGND 2 *  - Wvolume_velocity * DB .
+!. vf:Xdriver:XT vtGND -  Tvolume_velocity * DB .
+
+!. vf:Xdriver:XW1 vaGND - SdW * 1e-5 / 2 * DB .
+!. vf:Xdriver:XT vtGND - SdT * 1e-5 / DB .
+
+!. vf:Xdriver:XW1 vaGND - SdW *
+!. vf:Xdriver:XW2 vaGND - SdW * +
+!. vf:Xdriver:XT  vtGND - SdT * +
+!. 1e-5 / DUP DB . ARG .
+
+
+** kkse
+
+!. v1 v0 - IEg / NEG DUP ABS . ARG .
+
+!. v1 v0 - IEg * NEG DUP ABS DB . ARG .
+
+!. Wvolume_velocity NEG ARG DEG .
+!. Tvolume_velocity NEG ARG DEG .
+
+** ???delais de phase en us
+
+!. Wvolume_velocity Tvolume_velocity +
+!. 2 PI F * * / 1000000 * DUP .
+!. 1000000 F / / 1000 * .
+
+** delais de phase en % du cycle
+
+!. Wvolume_velocity ARG PDELAY ABS 100 * F * .
+!. Tvolume_velocity ARG PDELAY ABS 100 * F * .
+
+!. Wvolume_velocity
+!. Tvolume_velocity / ARG PDELAY ABS 100 * F * .
+
+** delais de phase indiv en 1/100 de ms
+
+!. Wvolume_velocity ARG PDELAY ABS 100k * .
+!. Tvolume_velocity ARG PDELAY ABS 100k * .
+
+** diff de phase entre hp en 1/10 de ms
+!. Tvolume_velocity Wvolume_velocity / ARG PDELAY 10k * .
+!. 1 F / 10k * .
+
+** delais de phase systeme en 1/10 de ms
+!. Wvolume_velocity Tvolume_velocity + ARG PDELAY 10k * .
+!. 1 F / 10k * .
+
+** [#C] Aux Default Output
+. IMPULSE 0 == IF
+*** Phase
+. SWvolume_velocity ARG DEG 10 / .
+. MWvolume_velocity ARG DEG 10 / .
+. Tvolume_velocity ARG DEG 10 / .
+. SWvolume_velocity MWvolume_velocity Tvolume_velocity + + ARG DEG 10 / .
+. ELSE
+*** Step response
+. SdSW distance avanceW - 2 POW separation_ST 2 POW + SQRT  response_correction_SW DIRIMP SWvolume_velocity 2 * * DUP .
+. SdMW distance avanceM - 2 POW separation_MT 2 POW + SQRT  response_correction_MW DIRIMP MWvolume_velocity 2 * * DUP .
+. SdT distance avanceT - 0° DIRIMP Tvolume_velocity * DUP .
+. + + .
+. THEN
+
+** diff phase acoustique electrique
+
+!. Wvolume_velocity
+!. Tvolume_velocity + IEg NEG / ARG DEG 10 / .
+
+!. Wvolume_velocity
+!. Tvolume_velocity + IEg NEG / ARG PDELAY ABS 100 * F * .
+
+!. Wvolume_velocity
+!. Tvolume_velocity + IEg NEG / ARG PDELAY ABS 10k * .
+!. 1 F / 10k * .
+
+** Imp of two woofers
+
+!. vlsw v0 - IRLlsw / DUP ABS . ARG .
+
+** Imp of two midwoofers
+
+!. vmw+ v0 - ILlf / DUP ABS . ARG .
+*** with filter
+!. v1 v0 - ILlf / .
+
+** Imp of tweeters
+
+!. vt+ v0 - IChf / DUP ABS . ARG .
+*** with filter
+!. v1 v0 - IChf /  .
+
+** Imp system
+!. v1 v0 - IEg NEG / DUP  .
+!!ARG COS 100 * .
+!. v1 v0 - IEg NEG * DUP  . ARG COS 100 * .
+
+** Adm system
+!.  IEg NEG v1 v0 - / DUP 10 * . ARG COS 100 * .
+
+** Pow of whole speaker
+
+!. v1 v0 - IEg * NEG DUP 42 . \
+                        REAL DB . \
+                        ARG COS 100 * .
+
+** volumes individuels (super pour impulse en 1/F)
+
+!.  Tvolume_velocity
+!. MWvolume_velocity
+!. SWvolume_velocity
+!. REAL . REAL . REAL .
+!!.  ABS .  ABS .  ABS .
+!. Tvolume_velocity MWvolume_velocity SWvolume_velocity + +
+!. REAL .
+!!.  ABS .
+
+** Excursion
+
+!. SWvolume_velocity 2 PI * F * SdSW * / ABS 2 SQRT 1000 * * .
+!. MWvolume_velocity 2 PI * F * SdMW * / ABS 2 SQRT 1000 * * .
+!.  Tvolume_velocity 2 PI * F *  SdT * / ABS 2 SQRT 1000 * * .
+
+** cone displacement
+
+!. SWvolume_velocity ABS 2 SQRT * 2 PI * F * SdSW  * / 1000 * .
+!. MWvolume_velocity ABS 2 SQRT * 2 PI * F * SdMW  * / 1000 * .
+!. Tvolume_velocity ABS 2 SQRT * 2 PI * F * SdT * / 1000 * .
+
+** Resistor power dissipation
+!. vmw+ vmwn - 2 POW IRMWnotch / .
+!. vt+ vtn1 - 2 POW IRtnotch / .
+** Capacitor tensions
+!. vmwn v0 - .
+!. vtn2 v0 - .
+!. vhf vt+ - .
+
+** Impedance tweeter
+!. vt+ v0 - IChf / DUP ABS . ARG .
+
+
+
+!. vf:Xdriver:XW1 vaGND -
+!!.  F I * .31 POW * 4.5 /
+!.  DB 52  + .
+!. vf:Xdriver:XT vaGND -
+!!.  F I * .0 POW * 2 SQRT *
+!.  DB 32.9 + .
+
+
+** driver's radiation impedance
+
+!. vf:Xdriver:XW1 vaGND - IZfront:Xdriver:XW1 /
+!. F  1 PI / POW * 2 PI * /
+!. DUP REAL DB . IMAG DB .

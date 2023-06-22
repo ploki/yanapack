@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
+ * Copyright (c) 2013-2019, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,61 +28,9 @@
  *     * Guillaume Gimenez <guillaume@blackmilk.fr>
  *
  */
-#include <stdlib.h>
-
-#include <yanapack.h>
-
-
-void simulation_context_free(simulation_context_t *sc)
-{
-  free(sc);
-}
-
-simulation_context_t *
-simulation_context_new(int impulse, int log_hz_min, int log_hz_max, int samples_per_decade)
-{
-  simulation_context_t *sc = malloc ( sizeof *sc);
-  sc->impulse = impulse;
-  if (impulse) {
-    sc->log_hz_min = 1;
-    // only even number of samples
-    sc->log_hz_max = log_hz_max / 2 * 2;
-  } else {
-    sc->log_hz_min = log_hz_min;
-    sc->log_hz_max = log_hz_max;
-    sc->samples_per_decade = samples_per_decade;
-  }
-  return sc;
-}
-
-int simulation_context_get_n_samples(simulation_context_t *sc)
-{
-  if (sc->impulse)
-    return sc->log_hz_max - sc->log_hz_min + 1;
-  return 1 + ( sc->log_hz_max - sc->log_hz_min ) * sc->samples_per_decade ;
-}
-
-yana_real_t simulation_context_get_f(simulation_context_t *sc, int i)
-{
-  if (sc->impulse)
-    return sc->log_hz_min + i;
-
-  if ( 0 == sc->samples_per_decade )
-    return pow(10.L, (yana_real_t)sc->log_hz_min * i );
-  else
-    return pow(10.L, (yana_real_t)sc->log_hz_min
-	       + (yana_real_t)i / (yana_real_t)sc->samples_per_decade);
-}
-
-int simulation_context_get_sample(simulation_context_t *sc, yana_real_t f)
-{
-  if (sc->impulse)
-    return f - sc->log_hz_min;
-  int sample = (log10(f)-(yana_real_t)sc->log_hz_min) * sc->samples_per_decade;
-  if ( sample < 0 )
-    return -1;
-  else if ( sample >= simulation_context_get_n_samples(sc) )
-    return -1;
-  else
-    return sample;
-}
+#pragma once
+#include "uforth.h"
+#include "yanapack.h"
+void simulation_impulse(simulation_context_t *sc,
+                        simulation_t *simulation,
+                        double frequence_exponent);

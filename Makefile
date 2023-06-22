@@ -1,4 +1,5 @@
 OFILES = src/simulation_context.o \
+	src/simulation_impulse.o \
 	src/dipole.o \
 	src/netlist.o \
 	src/nodelist.o \
@@ -11,7 +12,7 @@ OFILES = src/simulation_context.o \
 
 COMMON_CFLAGS = `gsl-config --cflags` -fPIC -Wall -Werror -Isrc
 RELEASE_CFLAGS = $(COMMON_CFLAGS) -O9 -mfpmath=sse  -fopenmp
-DEBUG_CFLAGS = $(COMMON_CFLAGS) -O0 -ggdb3 
+DEBUG_CFLAGS = $(COMMON_CFLAGS) -O0 -ggdb3 -Wno-error=unknown-pragmas
 
 .PHONY: all debug install
 
@@ -32,6 +33,9 @@ yanapack_test: $(OFILES) src/test.o
 
 yanapack: $(OFILES) src/main.o
 	gcc $(OFILES) src/main.o -o yanapack `gsl-config --libs` -lgomp -ledit
+
+gbf: gbf.c
+	gcc -ggdb3 gbf.c -o gbf `pkg-config --libs --cflags libpulse-simple` -lm
 
 clean:
 	rm -f libyanapack.so yanapack_test yanapack $(OFILES) src/test.o src/main.o

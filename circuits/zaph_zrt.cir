@@ -1,7 +1,9 @@
 * ZRT Zaph|Audio Revelator Tower *
 * http://www.zaphaudio.com/ZRT.html *
 
-.include circuits/driver.cir
+!.include circuits/driver_fddm.cir
+!.include circuits/driver.cir
+.include circuits/drivers/scan-speak.cir
 .include circuits/closed_cab.cir
 
 * amp *
@@ -10,6 +12,7 @@ Eg 1 0 2.83
 R8 1 2 6
 C1 2 3 30u
 L2 3 0 .25m .2
+
 C4 3 4 10u
 L6 4 5 1m 4.7
 C5 5 0 80u
@@ -20,9 +23,9 @@ XD3004/6600 4 0 aGND aGND driver param: { .03m TO Le 3 TO Re 2.3 TO Bl \
 
 L10 1 9 2.7m .168
 C12 9 0 12u
-X18W/3531G00 9 0 aGND b driver param: { .35m TO Le 5.8 TO Re 6.8 TO Bl \
-	  	                       0.6 TO Rms 1.85m TO Cms 17.5m TO Mms \
-			               150cm² TO Sd }
+
+X18W/3531G00 9 0  aGND b  18W/8531G00
+
 XBox b aGND closed_cab param: { 40L TO Vb 50 TO Qb 7 TO Ql \
                                 .35m TO Le 5.8 TO Re 6.8 TO Bl \
 				0.6 TO Rms 1.85m TO Cms 17.5m TO Mms \
@@ -38,10 +41,15 @@ Port b aGND 26.93cm 43cm² kKd
 * plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
 
 !general properties
-. 150cm² TO woofer_Sd    IZfront:X18W/3531G00 IPort + TO woofer_volume_velocity
-.   7cm² TO tweeter_Sd   IZfront:XD3004/6600  TO tweeter_volume_velocity
+. 150cm² TO woofer_Sd    IZfront:Xdriver:X18W/3531G00 IPort +
+.                        F .4 POW *
+.                        TO woofer_volume_velocity
+.   7cm² TO tweeter_Sd   IZfront:XD3004/6600
+.                        F .26 POW *
+.                        TO tweeter_volume_velocity
 .   0.25 TO distance_between_drivers
 .   1    TO distance
+
 
 !! frequency response /1m
 *.include circuits/frequency_response_2way.fth
@@ -53,6 +61,12 @@ Port b aGND 26.93cm 43cm² kKd
 *. -10° TO vertical_angle
 *.include circuits/vertical_directivity_2way.fth
 
+. woofer_Sd distance  0° DIRIMP woofer_volume_velocity   * DBSPL .
+. tweeter_Sd distance  0° DIRIMP tweeter_volume_velocity * DBSPL .
+
+
+
+
 ! cone disp in mm
 *.include circuits/cone_displacement_2way.fth
 
@@ -61,6 +75,11 @@ Port b aGND 26.93cm 43cm² kKd
 
 ! phase delay in ms
 *.include circuits/phase_delay_2way.fth
+
+
+
+
+
 
 ! ** group delay **
 *. >>> F IZfront:XD3004/6600 IZfront:X18W/3531G00 IPort + <<<

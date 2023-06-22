@@ -1,12 +1,11 @@
-*
 * SPLIFFTOWN 4000 XL
-*
 
 .include circuits/driver.cir
 .include circuits/driver_fddm.cir
 .include circuits/closed_cab.cir
 
-Eg    1 0    2.83
+!Eg    1 0    2.83
+Eg    1 0    4
 
 Rbsc  1 2    4.9
 Lbsc  1 2    1.4m 0.36
@@ -14,6 +13,9 @@ L1    2 3    0.8m 0.22
 C1    3 0   22u
 R1    3 4    6
 C3    4 0   22u
+
+!Rblop 1 3 1p
+!Rblop2 1 2 1p
 
 *X26W/8534G00 3 0 aGND 5 driver param: { .96m TO Le 5.7 TO Re 10.1 TO Bl \
 *		  	             0.80 TO Rms 0.95m TO Cms 50.5m TO Mms \
@@ -35,29 +37,35 @@ C4    8 9    5.6u
 L2    9 0    0.35m 0.14
 R3    9 0   18
 
-XD2905/9700 9 0 aGND aGND driver param: { .01m TO Le 4.7 TO Re 3.5 TO Bl \
+!Rtlop 1 9 1p
+
+XD2905/9700 9 0  tGND tGND driver param: { .01m TO Le 4.7 TO Re 3.5 TO Bl \
 		                          0.41 TO Rms 0.23m TO Cms 0.45m TO Mms \
 			                  8.5cm² TO Sd }
-
-* set logscale x
-* set mxtics
-* set mytics
-* set style line 12 lc rgb '#ddccdd' lt 1 lw 1.5
-* set style line 13 lc rgb '#ddccdd' lt 1 lw 0.5
-* set grid xtics mxtics ytics mytics back ls 12, ls 13
-* plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
+* old plot
+** set logscale x
+** set mxtics
+** set mytics
+** set style line 12 lc rgb '#ddccdd' lt 1 lw 1.5
+** set style line 13 lc rgb '#ddccdd' lt 1 lw 0.5
+** set grid xtics mxtics ytics mytics back ls 12, ls 13
+** plot [16:40000] [40:100] 'plop.txt' using 1:2 title 'sum' with lines, 'plop.txt' using 1:3 title 'woofer' with lines, 'plop.txt' using 1:4 title 'tweeter' with lines
 
 !general properties
-. 350cm²   TO woofer_Sd    IZfront:X26W/8534G00 TO woofer_volume_velocity
-.   8.5cm² TO tweeter_Sd   IZfront:XD2905/9700  TO tweeter_volume_velocity
+. 350cm²   TO woofer_Sd    IZfront:X26W/8534G00
+!.                               F 1 PI / POW * 2 PI * /
+.                               TO woofer_volume_velocity
+.   8.5cm² TO tweeter_Sd   IZfront:XD2905/9700
+!.                               F .15 POW * 5 /
+.                               TO tweeter_volume_velocity
 .   0.25   TO distance_between_drivers
 .   1      TO distance
 
 !! frequency response /1m
-*.include circuits/frequency_response_2way.fth
+!.include circuits/frequency_response_2way.fth
 
 !! horizontal directivity
-.include circuits/horizontal_directivity_2way.fth
+!.include circuits/horizontal_directivity_2way.fth
 
 !! vertical directivity
 *. -10° TO vertical_angle
@@ -82,3 +90,56 @@ XD2905/9700 9 0 aGND aGND driver param: { .01m TO Le 4.7 TO Re 3.5 TO Bl \
 ! total impedance
 *. F .
 *. v1 v0 - IEg / DUP ABS . ARG DEG .
+
+
+!. vf:X26W/8534G00 vaGND -
+!.                               F .3 POW * 5 /
+!. DB 70 + .
+
+!. vf:XD2905/9700 vtGND -
+!.                               F .15 POW * 8 /
+!. DB 52 + .
+
+* new plot
+
+. 350cm² TO SdW
+. 8.5cm² TO SdT
+
+. 0 TO avanceW
+. 0 TO avanceT
+. 1 TO distance
+
+.    IZfront:X26W/8534G00
+!.                               F 1 PI / POW * 2 PI * /
+.                               TO Wvolume_velocity
+.   IZfront:XD2905/9700
+!.                               F .15 POW * 5 /
+.                               TO Tvolume_velocity
+
+. 0° TO response_correction_W
+
+. F .
+
+** [#A] Global response and directivity
+
+. SdW distance avanceW - response_correction_W DIRIMP Wvolume_velocity * DUP DBSPL .
+. SdT distance avanceT - 0° DIRIMP Tvolume_velocity * DUP DBSPL .
+. + DBSPL .
+
+. IMPULSE 0 == IF
+.   SdW distance avanceW - 30° DIRIMP Wvolume_velocity *
+.   SdT distance avanceT - 30° DIRIMP Tvolume_velocity *
+.     + DBSPL .
+.   SdW distance avanceW - 60° DIRIMP Wvolume_velocity *
+.   SdT distance avanceT - 60° DIRIMP Tvolume_velocity *
+.     + DBSPL .
+.
+!   PHASE
+.   Wvolume_velocity ARG DEG 10 / .
+.   Tvolume_velocity ARG DEG 10 / .
+.   Wvolume_velocity Tvolume_velocity + ARG DEG 10 / .
+. ELSE
+.   SdW distance avanceW - response_correction_W DIRIMP Wvolume_velocity * DUP .
+.   SdT distance avanceT - 0° DIRIMP Tvolume_velocity * DUP .
+.     + .
+. THEN

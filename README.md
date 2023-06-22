@@ -151,8 +151,8 @@ it is still feasible to compute a response in the time domain for a
 given circuit.
 
 To choose between the frequency and time domains, you can specify either
-the -p or -i option on the command line. Using the -p option indicates a
-preference for the frequency domain, while the -i option indicates a
+the `-p` or `-i` option on the command line. Using the `-p` option indicates a
+preference for the frequency domain, while the `-i` option indicates a
 desire to obtain results in the time domain. This allows users to
 select the appropriate domain for their specific analysis needs when
 running the simulation.
@@ -178,9 +178,9 @@ with the following interpretations:
  - If N is greater than 0: The excitation will be a square waveform with a frequency of N Hz.
  - If N is 0: A unit impulse is used as the excitation.
  - If N is -1: A step response is computed.
- - If n is less than -1: The excitation is a pulsation of -exp(i·2·π·n).
+ - If N is less than -1: The excitation is a pulsation of -exp(i·2·π·N).
 
-When the `-i` parameter is used, the interpretation of the -f and -t parameters changes.
+When the `-i` parameter is used, the interpretation of the `-f` and `-t` parameters changes.
 Instead of representing the base 10 logarithm of the frequency bounds, they are
 interpreted differently. Specifically:
  - When using the `-i` parameter, set the argument for the `-f` parameter to 0. This indicates that the simulation will be performed from 0 Hz (e.g. DC).
@@ -350,8 +350,8 @@ In the examples,
  - Kams defines a conductance varying with frequency ( z = 1 / ( 2290 * &omega; ) )
 
 #### Free air impedance
-(to be removed)
-Completely useless, it pollutes the circuit impedance and hence the tension source load
+(deprecated)
+The inclusion of this one was a mistake
 
 ### The Forth-like language
 The embedded Forth-like interpreter within yanapack serves various purposes within the circuit file or during interactive sessions (using the `-s` parameter). It is used in the following ways:

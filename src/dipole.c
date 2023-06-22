@@ -93,6 +93,29 @@ status_t dipole_init_simple(dipole_t *dipole)
   return SUCCESS;
 }
 
+status_t dipole_init_tension_source(dipole_t *dipole)
+{
+  int i, s;
+  yana_real_t phase_num = 0;
+  if (dipole->param1)
+    phase_num = dipole_parse_magnitude(dipole->param1);
+  yana_real_t phase_denum = 0;
+  if (dipole->param2)
+    phase_denum = dipole_parse_magnitude(dipole->param2);
+  yana_complex_t phase = 1;
+  if ( phase_denum != 0)
+    {
+      phase = cexp(I*2*M_PI*phase_num/phase_denum);
+    }
+  for ( i = 0, s = simulation_context_get_n_samples(dipole->sc) ;
+	i < s ;
+	++ i )
+    {
+      dipole->values[i] = phase*dipole->magnitude;
+    }
+  return SUCCESS;
+}
+
 status_t dipole_init_semi(dipole_t *dipole)
 {
   //[K]idx node1 node2 magnitude pow_of_freq [cri][ia]
@@ -391,8 +414,9 @@ status_t dipole_init_values(dipole_t *dipole)
     {
     case YANA_RESISTOR:
     case YANA_TRANSFORMER:
-    case YANA_TENSION_SOURCE:
       return dipole_init_simple(dipole);
+    case YANA_TENSION_SOURCE:
+      return dipole_init_tension_source(dipole);
     case YANA_SEMI_IMPEDANCE:
       return dipole_init_semi(dipole);
     case YANA_GYRATOR:

@@ -3,35 +3,48 @@
 Yanapack: Yet Another Nodal Analysis PACKage
 ============================================
 
-This nodal analysis software is dedicated to electro-mechanical-acoustical equivalent circuit simulation (from a lumped element model).
+This dedicated nodal analysis software is designed for simulating
+electro-mechanical-acoustical equivalent circuits based on a lumped
+element model. It allows users to analyze and simulate the behavior
+of complex systems by representing them using a circuit-based approach,
+incorporating electrical, mechanical, and acoustic elements into the simulation.
 
-At this time, only linear analysis in the frequency domain is supported. A simple Gauss-Jordan algorithm is used and no special attention is taken on conditioning the system of equations.
+The simulation primarily operates in the frequency domain, which is the default domain
+for the simulation results. However, by utilizing the `-i` option, users can obtain the
+simulation results in the time domain instead. This option also provides the flexibility
+to select different types of excitations, including unit impulse, unit step, square waves,
+or sine waves of arbitrary frequencies. By enabling the `-i` option, users can analyze and
+visualize the system's response over time with various input signals.
+
 
 ### References
 
-The science behind this simulation software comes from:
+The scientific principles underpinning this simulation software are derived from:
  - Acoustics: Sound Fields and Transducers (Leo L. Beranek, Tim Mellow) ISBN-13: 978-0123914217
  - Electroacoustic modelling of the subwoofer enclosures (Janne Ahonen, Linearteam) http://koti.kapsi.fi/jahonen/Audio/Papers/enclosuremodelling.pdf
 
 
 ### Elements simulated
 
-Here is a list of passive elements simulated:
- - for conventional electrical simulations
+The simulation software incorporates the simulation of various passive elements, categorized as follows:
+
+ - For conventional electrical simulations:
    * Resistors
    * Capacitors
    * Inductors
    * Transformers
    * Gyrators
    * Current sources
-   * Tension sources
- - specific to acoustic simulations
-   * Pistonic radiator, based on Bessel functions, represents the acoustic impedance of circular pistonic radiators
-   * Port impedance of vented enclosures
-   * Box impedance of enclosures
-   * Free air impedance from the source to the listener
+   * Voltage sources
 
-In addition to elementary dipoles, it is possible to create custom sub circuits at will.
+ - Specific to acoustic simulations:
+   * Pistonic radiator: Represents the acoustic impedance of circular pistonic radiators, utilizing Bessel functions.
+   * Port impedance: Models the acoustic impedance of vented enclosures.
+   * Box impedance: Represents the impedance characteristics of enclosures.
+   * Free air impedance: Accounts for the acoustic impedance from the sound source to the listener.
+
+Additionally, the software allows for the creation of custom sub-circuits, offering
+flexibility in designing and incorporating specialized circuit elements as needed.
 
 Availability
 ------------
@@ -93,12 +106,15 @@ $ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir
 100000		83.8266358783	52.6660228355	18.127421656
 ```
 
-This command loads the netlist from circuits/Splifftown4000XL.cir
-and performs the simulation from 10^1 to 10^5 Hertz with 3 steps per decades.
-The result of the simulation is dumped to the standard output
+The provided command loads the netlist from the file "circuits/Splifftown4000XL.cir"
+and conducts a simulation across the frequency range of 10^1 to 10^5 Hertz, with 3
+steps per decade. The simulation results are outputted to the standard output.
 
-It is also possible to spawn a shell with the simulation just run and issue custom
-formulae to control the output
+Additionally, the software offers the capability to spawn a REPL, allowing users to
+interact with the simulation that was just executed. This enables users to issue
+custom formulas or commands to control and manipulate the output according to
+their specific requirements.
+
 
 ``` bash
 $ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir -s
@@ -125,47 +141,73 @@ Output is controlled using a forth like language. Here, the output is composed o
 
 [Splifftown4000XL circuit file](https://github.com/ploki/yanapack/blob/master/circuits/Splifftown4000XL.cir)
 
-Domain of simulation
+Simulation domain
 --------------------
-This software provides a limited support for time domain simulation because of the
-pistonic radiator which does not have a proper representation in this domain.
-Hence, all computations are performed in the frequency domain. Despite of this, it is still
-possible to compute an response in the time domain for a given circtuit.
+This software primarily focuses on frequency domain simulation due
+to the limitations of representing the pistonic radiator accurately
+in the time domain. As a result, all computations and analyses are
+carried out in the frequency domain. However, despite this emphasis,
+it is still feasible to compute a response in the time domain for a
+given circuit.
 
-The selection between the frequency and time domains is specified by the use of either `-p` or `-i`
-on the command line.
+To choose between the frequency and time domains, you can specify either
+the -p or -i option on the command line. Using the -p option indicates a
+preference for the frequency domain, while the -i option indicates a
+desire to obtain results in the time domain. This allows users to
+select the appropriate domain for their specific analysis needs when
+running the simulation.
 
 #### Frequency domain
+When the `-p` parameter is provided or neither `-p` nor `-i` is specified,
+the simulation result is displayed in the frequency domain. In this
+scenario, the arguments for the `-f` and `-t` options are interpreted as
+the base 10 logarithm of the lower and upper bounds of the frequencies
+of interest.
 
-When the `-p` (steps per decade) parameter is provided (or neither of `-p` or `-i` is provided), the
-simulation result is shown in the frequency domain. In this case the arguments for the
-options `-f` and `-t` are interpreted as the base 10 logarithm of the lower and upper bounds of
-the frequencies of interest.
+By using the `-f` option followed by a numerical value, you define the base 10
+logarithm of the lower frequency bound. Similarly, the `-t` option followed
+by a numerical value sets the base 10 logarithm of the upper frequency bound.
+This allows you to specify the frequency range over which you want to observe
+the simulation results in the frequency domain.
 
 #### Time domain
 
-When the `-i` parameter is used, the provided argument is intepreted as follow:
- - 0: Compute an impulse response
- - 1: Compute a step response
- - n>1: Compute the response for a `n`Hz square wave as input signal.
+When the `-i` parameter is utilized, the simulation result in the frequency domain
+is extrapolated to the given excitation, determined by an integer argument N
+with the following interpretations:
+ - If N is greater than 0: The excitation will be a square waveform with a frequency of N Hz.
+ - If N is 0: A unit impulse is used as the excitation.
+ - If N is -1: A step response is computed.
+ - If n is less than -1: The excitation is a pulsation of -exp(i·2·π·n).
 
-In this mode, the argument of the `-f` parameter must be set to `0` and the argument of the `-t`
-parameter to twice the Nyquist frequency (e.g. 40kHz for audo applications).
+When the `-i` parameter is used, the interpretation of the -f and -t parameters changes.
+Instead of representing the base 10 logarithm of the frequency bounds, they are
+interpreted differently. Specifically:
+ - When using the `-i` parameter, set the argument for the `-f` parameter to 0. This indicates that the simulation will be performed from 0 Hz (e.g. DC).
+ - The argument for the `-t` parameter should be set to twice the Nyquist frequency,
+   such as 40ish kHz for audio applications. This represents the upper frequency bound.
 
 Simulation files
 ----------------
 
-This software implements a small subset of what ngspice and gnucap are capable of.
+This software pays homage to well-known packages like ngspice and gnucap while
+having its own idiosyncrasies, serving a specific purpose for its creator, I
+like it that way, and I find it very useful. However, at this point, I digress
+from the topic at hand.
 
-To start a simulation, first you need a netlist that describes the circuit in a Spice-like language. Then, you need to ask yanapack to output what you are looking for using a forth-like language.
+Similar to Spice, circuit descriptions in this software are provided in a file
+known as a netlist. However, unlike Spice, this software offers a unique
+feature where the output of the simulation can be customized using a Forth-like
+language. This allows users to program and manipulate the simulation results
+according to their specific needs and requirements, providing a good level of
+flexibility and customization.
 
-### Netlist description language
+### Netlist description
 
-The netlist is a list of dipole. For each dipole, you specify the magnitude, the connections with each others and other dipole specific parameters.
+The netlist comprises a list of dipoles, where each dipole is described by its magnitude, connections to other dipoles, and additional parameters specific to the dipole.
 
-Each dipole is defined on a new line. The first character specifies the type of dipole and each name must be unique for each type of dipole.
+Each dipole is defined on a separate line in the netlist. The type of dipole is denoted by the first character, and it is essential for each dipole name to be unique within its dipole type.
 
-The dipoles defined are given a magnitude as a function of s where s = j&omega;.
 
 #### Resistor
 ```
@@ -202,10 +244,11 @@ Vabc x y v
  - x and y are the interconnection nodes
  - v is the electric potential between x and y (in than order) and is constant at all frequencies
 
-Note that output impedance is null.
+Note that output impedance is zero.
 
 #### Current source
-Current source is not an elementary dipole type in yanapack but can be modeled with a tension source and a gyrator using a sub circuit.
+Although a current source is not considered an elementary dipole type in yanapack, it can be simulated using a sub circuit consisting of a tension source and a gyrator.
+
 ```
 .subckt current_source v1 v2 current
 Eg 1 0 {current}
@@ -232,7 +275,7 @@ Trabc w z j
  - i and j are the coefficient that represent the windings coupling
 
 #### Gyrator
-A gyrator is an hypothetical non reciprocal linear element that inverts the current-voltage characteristic of the circuit between the sides of the device. It is used to pass from impedance to admittance analogy (and the reverse of course)
+A gyrator is a theoretical non-reciprocal linear element that reverses the current-voltage characteristic of the circuit between its terminals. It is employed to transition between the impedance and admittance analogies (and vice versa).
 ```
 Glabc x y i
 Grabc w z j
@@ -288,7 +331,7 @@ Kabc x y magnitude pow_of_w [cri][ia]
 Ke x y 143m .5 ci
 Kams w z 2290 1 ra
 ```
-The semi impedance dipole is useful to model specific dipoles found in frequency-dependent damping modeling of loudspeakers (Thorborg, Knud; Tinggaard, Carsten; Agerkvist, Finn; Futtrup, Claus; "Frequency Dependence of Damping and Compliance in Loudspeaker Suspensions"; JAES Volume 58 Issue 6 pp. 472-486; June 2010)
+The semi-impedance dipole is a valuable tool for representing specific dipoles encountered in the frequency-dependent damping modeling of loudspeakers. This particular dipole has been extensively discussed and researched in the paper titled "Frequency Dependence of Damping and Compliance in Loudspeaker Suspensions" by Thorborg, Knud; Tinggaard, Carsten; Agerkvist, Finn; Futtrup, Claus, published in the Journal of the Audio Engineering Society (JAES), Volume 58, Issue 6, pages 472-486 in June 2010.
 
  - abc is the semi impedance name
  - x and y are the interconnection nodes of the dipole
@@ -310,19 +353,26 @@ In the examples,
 (to be removed)
 Completely useless, it pollutes the circuit impedance and hence the tension source load
 
-### The Forth-like formula language
+### The Forth-like language
+The embedded Forth-like interpreter within yanapack serves various purposes within the circuit file or during interactive sessions (using the `-s` parameter). It is used in the following ways:
+ - To display simulation results: The script is embedded in the circuit file, and any lines
+   starting with ". " (a dot and a space) are interpreted as Forth code and used to display
+   simulation results.
+ - To provide parameters to custom sub circuits: Parameters can be specified after the "param:"
+   keyword within a block enclosed by curly brackets. This allows customization of sub
+   circuits by passing specific values.
+ - To push values within instantiated custom sub circuits: The Forth-like interpreter enables
+   the insertion of values into the custom sub circuits that are being instantiated. This allows
+   for flexible parameterization and customization of the circuits.
+ - To display simulation results during an interactive session: In an interactive session, lines
+   should not start with a dot. The interpreter will interpret these lines and display the
+   corresponding simulation results.
 
-The embedded Forth-like interpreter is used in different ways inside the circuit file or during the interactive sessions (with the -s parameter)
- - To display simulation results. The script is embedded in the circuit file and all lines starting with ". " (a dot and a space) are considered Forth code
- - To provide parameters to custom sub circuits. After the "param:" keyword inside a block delimited by curly brackets
- - To push values inside the custom sub circuit being instanciated
- - To display simulation results from an interactive session. In this case lines must not start with a dot.
+This domain-specific language provides a versatile and flexible approach for analyzing and manipulating simulation results. It serves as a powerful tool that allows for computations and operations to be performed between the simulation and the report, enabling users to extract valuable insights and perform custom calculations.
 
-#### Data types
+#### Data types and output
 
-There is only one data type, complex numbers.
-
-The DOT word output the magnitude of the complex number which is on the top of the stack.
+In the software, complex numbers are the sole data type used. The "DOT" word (or its alias ".") is employed to retrieve and display the magnitude of the complex number located at the top of the stack.
 
 #### Arithmetic words
  - __MUL__: 2 3 MUL . => 6
@@ -415,13 +465,13 @@ The comparison is performed on the magnitude of the values in TOS and NOS.
 
 ### Number formats
 
-In both Forth context or in the netlist definition, only real floating point numbers are permitted. The numbers are represented as usual and the following are all valid figures
+In both the Forth context and the netlist definition, only real floating-point numbers are allowed. The numbers are represented in the usual format, and the following examples demonstrate valid figures:
  - 1
  - 1.2
  - .56
  - .68e-3
 
-In addition, there are several suffixes to perform basic conversions and scaling.
+In addition, there are several suffixes used to perform basic conversions and scaling.
  - __f__: * 10^-15
  - __p__: * 10^-12
  - __n__: * 10^-9
@@ -463,12 +513,3 @@ Angle suffixes
 
 #### .include
 #### .subckt/.ends
-
-
-Contributing
-------------
-
-I would be happy:
- - if you find any interest in this program
- - to make corrections to the code if you find any errors.
- - to merge your contributions

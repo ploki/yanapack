@@ -827,7 +827,7 @@ get_freq(simulation_context_t *sc, int i) {
   if (sc) {
     freq = simulation_context_get_f(sc, i);
     if (sc->impulse) {
-      //freq = freq / (double)sc->log_hz_max;
+      freq = freq / ((double)sc->log_hz_max * 4.);
     }
   }
     return freq;

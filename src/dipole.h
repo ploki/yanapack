@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -49,7 +49,7 @@ typedef enum
 
   } dipole_type_t;
 
-typedef struct dipole_t 
+typedef struct dipole_t
 {
   simulation_context_t *sc;
   int idx;

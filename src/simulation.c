@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014, Guillaume Gimenez <guillaume@blackmilk.fr>
  * All rights reserved.
  *
@@ -121,7 +121,7 @@ void simulation_dump(simulation_t *simulation)
       printf("I%s\t\t",vec_dipole(simulation->nodelist->netlist->dipoles)[i].name);
     }
   printf("=\n");
-  
+
   for ( j = 0 ; j < simulation->n_vars ; ++j )
     {
       for ( i = 0 ; i < simulation->n_vars + 1 ; ++i )
@@ -323,7 +323,7 @@ status_t simulation_prepare_transformer(simulation_t *simulation, dipole_t *dipo
 
   other_side->quadripole_done = 1;
   dipole->quadripole_done = 1;
-  
+
   //fprintf(stderr,"*** T1=%s, T2=%s\n", dipole->name, other_side->name);
 
   //printf("v%d * T2 - v%d * T2 - v%d * T1 + v%d T1 = 0\n",dipole->node1, dipole->node2, other_side->node1, other_side->node2);
@@ -377,7 +377,7 @@ status_t simulation_prepare_gyrator(simulation_t *simulation, dipole_t *dipole, 
     }
   if ( !found )
     assert(!"incomplete gyrator");
-  
+
 
 #if 1
   line[nodelist_idx(simulation->nodelist,dipole->node1)].state = CELL_POSITIVE_UNITY;
@@ -395,7 +395,7 @@ status_t simulation_prepare_gyrator(simulation_t *simulation, dipole_t *dipole, 
 			    dipole);
 #endif
   dipole->quadripole_done = 1;
-  
+
   if ( other_side->quadripole_done )
     {
 #if 1
@@ -508,7 +508,7 @@ status_t simulation_kcl(simulation_t *simulation, int *current_line)
     {
       if ( vec_node(simulation->nodelist->nodes)[j].is_gnd )
 	continue;
-      
+
       for ( i = 0 ; i < simulation->nodelist->n_dipoles ; ++i )
 	{
 	  int sign = vec_int(vec_node(simulation->nodelist->nodes)[j].connections)[i];
@@ -594,13 +594,13 @@ status_t simulation_new(simulation_context_t *sc, nodelist_t *nodelist, simulati
   memset(simulation, 0, sizeof *simulation);
   simulation->nodelist = nodelist;
   simulation->n_vars = vec_node_count(nodelist->nodes) + nodelist->n_dipoles;
-  
+
   simulation->cells = malloc( simulation->n_vars * sizeof(cell_t *));
 
   for ( j = 0 ; j < simulation->n_vars ; ++j )
     {
       simulation->cells[j] = malloc( (simulation->n_vars + 1 ) * sizeof(cell_t));
-      
+
       for ( i = 0 ; i < simulation->n_vars + 1 ; ++i )
 	{
 	  simulation->cells[j][i].dipole_name = NULL;
@@ -624,7 +624,7 @@ status_t simulation_new(simulation_context_t *sc, nodelist_t *nodelist, simulati
   init_variables(sc, simulation);
 
   //simulation_sort(simulation);
-  
+
   *simulationp = simulation;
   return status;
 }

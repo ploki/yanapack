@@ -45,7 +45,7 @@ simulation_context_new(int impulse, int log_hz_min, int log_hz_max, int samples_
   sc->impulse = impulse;
   if (impulse) {
     sc->log_hz_min = 1;
-    // only even number of samples
+    // only even number otherwise performance is terrible
     sc->log_hz_max = log_hz_max / 2 * 2;
   } else {
     sc->log_hz_min = log_hz_min;

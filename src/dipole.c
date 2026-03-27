@@ -374,7 +374,6 @@ yana_complex_t free_air_dir_impedance(yana_real_t f,
 				      yana_real_t sd,
 				      yana_real_t theta)
 {
-  f=f*2;
   yana_real_t w = 2.L * M_PI * f;
   yana_real_t k = w / YANA_C;
   yana_real_t a_2 = sd/M_PI;

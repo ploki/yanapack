@@ -820,22 +820,21 @@ push_dB(uforth_context_t *uf_ctx, yana_complex_t dB)
     tok = l_stack[l_stack_pos-1];				\
   } while (0)
 
-
 static yana_real_t
 get_freq(simulation_context_t *sc, int i) {
   yana_real_t freq = 1;
   if (sc) {
     freq = simulation_context_get_f(sc, i);
     if (sc->impulse) {
-      freq = freq / ((double)sc->log_hz_max * 4.);
+      freq = freq / ((double)sc->log_hz_max);
     }
   }
     return freq;
 }
 static yana_real_t
 get_actual_freq(simulation_context_t *sc, int i) {
-  return get_freq(sc, i);
-  //return sc?simulation_context_get_f(sc, i):1.L
+  //return get_freq(sc, i);
+  return sc?simulation_context_get_f(sc, i):1.L;
 }
 
 static int counter = 0;

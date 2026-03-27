@@ -31,6 +31,7 @@
 #pragma once
 #include "uforth.h"
 #include "yanapack.h"
-void simulation_impulse(simulation_context_t *sc,
-                        simulation_t *simulation,
-                        double frequence_exponent);
+
+void result_impulse(simulation_context_t *sc,
+                    uforth_output_t *output,
+                    double frequeence_exponent);

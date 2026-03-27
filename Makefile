@@ -11,7 +11,7 @@ OFILES = src/simulation_context.o \
 	src/stehfest.o
 
 COMMON_CFLAGS = `gsl-config --cflags` -fPIC -Wall -Werror -Isrc
-RELEASE_CFLAGS = $(COMMON_CFLAGS) -O9 -mfpmath=sse  -fopenmp
+RELEASE_CFLAGS = $(COMMON_CFLAGS) -O3 -mfpmath=sse -fopenmp
 DEBUG_CFLAGS = $(COMMON_CFLAGS) -O0 -ggdb3 -Wno-error=unknown-pragmas
 
 .PHONY: all debug install

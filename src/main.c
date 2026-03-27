@@ -225,10 +225,6 @@ int main(int argc, char **argv)
   simulation_set_values(simulation);
   simulation_solve(simulation);
 
-  if (impulse) {
-    simulation_impulse(sc, simulation, frequence_exponent);
-  }
-
   uforth_context_t *uf_ctx = NULL;
 
   if ( command )
@@ -243,6 +239,9 @@ int main(int argc, char **argv)
       uforth_output_t *output;
       status = uforth_execute(uf_ctx, sc, simulation, NULL, NULL, impulse, &output);
       if (SUCCESS == status) {
+        if (impulse) {
+          result_impulse(sc, output, frequence_exponent);
+        }
         uforth_output_print(output);
         uforth_output_free(output);
       };
@@ -286,6 +285,9 @@ int main(int argc, char **argv)
 		{
                   uforth_output_t *output;
 		  uforth_execute(uf_ctx, sc, simulation, NULL, NULL, impulse, &output);
+                  if (impulse) {
+                    result_impulse(sc, output, frequence_exponent);
+                  }
                   uforth_output_print(output);
                   uforth_output_free(output);
 		  uforth_free(uf_ctx);

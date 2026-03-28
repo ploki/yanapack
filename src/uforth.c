@@ -168,6 +168,7 @@ uforth_output_free(uforth_output_t *output)
     line_t line = vec_line(output->lines)[i];
     vec_yana_complex_free(line);
   }
+  vec_bool_free(output->isdB);
   vec_yana_complex_free(output->current_line);
   vec_line_free(output->lines);
   free(output);
@@ -187,7 +188,7 @@ uforth_output_print(uforth_output_t *output)
     line_t prev = NULL, next = NULL;
 
     if (j > 0) {
-      prev = vec_line(output->lines)[j + 1];
+      prev = vec_line(output->lines)[j - 1];
     }
     if (j < vec_line_count(output->lines) - 1) {
       next = vec_line(output->lines)[j + 1];
@@ -227,7 +228,7 @@ uforth_output_dot_dB(uforth_output_t *output, yana_complex_t value)
   vec_yana_complex_push_back(output->current_line, value);
 }
 
-static void
+void
 uforth_output_dot(uforth_output_t *output, yana_complex_t value)
 {
   vec_bool_push_back(output->isdB, false);
@@ -241,7 +242,7 @@ uforth_output_column_is_dB(uforth_output_t *output, int column)
   return vec_bool(output->isdB)[column];
 }
 
-static void
+void
 uforth_output_newline(uforth_output_t *output)
 {
   int current_columns = vec_yana_complex_count(output->current_line);

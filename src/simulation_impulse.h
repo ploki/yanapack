@@ -32,6 +32,8 @@
 #include "uforth.h"
 #include "yanapack.h"
 
-void result_impulse(simulation_context_t *sc,
-                    uforth_output_t *output,
-                    double frequeence_exponent);
+status_t
+result_impulse(simulation_context_t *sc,
+               uforth_output_t *freq_output,
+               double fe,
+               uforth_output_t **time_outputp);

@@ -65,6 +65,12 @@ uforth_output_t *
 uforth_output_new(void);
 
 void
+uforth_output_dot(uforth_output_t *output, yana_complex_t value);
+
+void
+uforth_output_newline(uforth_output_t *output);
+
+void
 uforth_output_free(uforth_output_t *output);
 
 yana_complex_t

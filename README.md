@@ -90,7 +90,7 @@ Simulation example
 ------------------
 
 ``` bash
-$ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir
+$ ./yanapack -p 3 -f 1 -t 5 -n circuits/Splifftown4000XL.cir
 10	     	61.4009337923	61.4008341279	61.400634798
 21.5443469003	73.6382199187	73.6377573139	73.6368320797
 46.4158883361	86.6703029922	86.6681556961	86.6638605731
@@ -117,7 +117,7 @@ their specific requirements.
 
 
 ``` bash
-$ ./yanapack -p 3 -F 1 -T 5 -n circuits/Splifftown4000XL.cir -s
+$ ./yanapack -p 3 -f 1 -t 5 -n circuits/Splifftown4000XL.cir -s
 YANAPACK: Yet Another Nodal Analysis PACKage
 INFO: running simulation on circuits/Splifftown4000XL.cir
 yanapack> F . v1 v0 - IEg / DUP . ARG DEG .
@@ -178,14 +178,43 @@ with the following interpretations:
  - If N is greater than 0: The excitation will be a square waveform with a frequency of N Hz.
  - If N is 0: A unit impulse is used as the excitation.
  - If N is -1: A step response is computed.
- - If N is less than -1: The excitation is a pulsation of -exp(i·2·π·N).
+ - If N is less than -1: The excitation is a complex exponential exp(i·2·π·|N|·t), i.e. a pure tone of |N| Hz.
 
-When the `-i` parameter is used, the interpretation of the `-f` and `-t` parameters changes.
-Instead of representing the base 10 logarithm of the frequency bounds, they are
-interpreted differently. Specifically:
- - When using the `-i` parameter, set the argument for the `-f` parameter to 0. This indicates that the simulation will be performed from 0 Hz (e.g. DC).
- - The argument for the `-t` parameter should be set to twice the Nyquist frequency,
-   such as 40ish kHz for audio applications. This represents the upper frequency bound.
+When the `-i` parameter is used, the interpretation of the `-f` and `-t` parameters changes:
+ - `-f` is ignored. The simulation is run on a linear grid of 1 Hz steps, starting at 1 Hz.
+ - `-t` is the highest simulated frequency in Hz, that is the Nyquist frequency of the
+   reconstructed signal. It is rounded down to an even number. The sampling rate is twice
+   that value, e.g. `-t 24000` gives a 48 kHz signal.
+ - `-p` is ignored.
+
+The result covers a one-second window, with `-t` × 2 samples. The first column is the time
+in seconds, the following ones are the values computed by the Forth script.
+
+``` bash
+$ ./yanapack -i 0 -t 24000 -n circuits/Splifftown4000XL.cir
+```
+
+Some things to keep in mind:
+ - The Forth script must output the frequency first (`. F .`): in the time domain, the first
+   column is taken to be the frequency and dropped. Any other value written first is lost.
+ - The convolution is circular over the one-second window: a response that lasts longer
+   than one second wraps around to the beginning.
+ - The response at 0 Hz (DC) is not simulated, and is set to zero. This removes the average
+   value of each output over the one-second window. Whether that matters depends on the
+   quantity and on the excitation:
+   * Acoustic pressure and cone velocity are truly zero at DC: the result is exact.
+   * Electrical quantities such as the current drawn by the circuit or the voltage across a
+     resistive load, and the cone excursion of a sealed or free-air driver, are not zero at DC.
+     For these:
+     - square wave (N > 0): the excitation has no DC component, so the result is right;
+     - impulse (N = 0): the error is a constant offset of H(0) divided by the number of
+       samples, usually negligible;
+     - step (N = -1): the result is wrong, since the steady value is precisely what is
+       removed. A 1 V step across an 8 Ω resistor gives -0.125 A at t = 0 and about 0 A
+       afterwards, instead of 0.125 A for t > 0.
+ - Building with `-DYANA_IMPULSE_DC_EQUALS_FIRST_SAMPLE=1` uses the value at 1 Hz for DC
+   instead. It fixes the step response of the quantities above, at the cost of a small
+   offset on those that are truly zero at DC.
 
 Simulation files
 ----------------
